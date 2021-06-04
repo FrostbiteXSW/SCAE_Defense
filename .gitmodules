@@ -1,0 +1,4 @@
+[submodule "SCAE"]
+	path = SCAE
+	url = https://github.com/FrostbiteXSW/SCAE_Attack.git
+	branch = Dev
