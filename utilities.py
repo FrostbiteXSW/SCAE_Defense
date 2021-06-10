@@ -340,6 +340,7 @@ class ScaeDistTrain(_ModelCollector):
 			temperature=100
 	):
 		self._sess = scae._sess
+		self._valid_shape = scae._valid_shape
 
 		with self._sess.graph.as_default():
 			self._model = _stacked_capsule_autoencoder(scae._input_size[1],  # Assume width equals height
@@ -444,12 +445,6 @@ class ScaeDistTrain(_ModelCollector):
 	# ---------------------------------------- Inherit from ScaeBasement ----------------------------------------
 	def __call__(self, images):
 		return ScaeBasement.__call__(self, images)
-
-	def _valid_shape(self, images, labels=None):
-		return ScaeBasement._valid_shape(self, images, labels)
-
-	def finalize(self):
-		return ScaeBasement.finalize(self)
 
 	def simple_test(self, dataset: DatasetHelper):
 		return ScaeBasement.simple_test(self, dataset)
