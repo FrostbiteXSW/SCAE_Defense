@@ -1,11 +1,10 @@
 import sonnet as snt
 import tensorflow as tf
-from tqdm import tqdm
 
 from SCAE.capsules import primary
 from SCAE.capsules.attention import SetTransformer
 from SCAE.capsules.models.scae import ImageAutoencoder, ImageCapsule
-from SCAE.tools.model import _ModelCollector, ScaeBasement
+from SCAE.tools.model import _ModelCollector, ScaeBasement, _stacked_capsule_autoencoder as _scae
 from SCAE.tools.utilities import DatasetHelper
 from SCAE.train import Configs
 
@@ -327,7 +326,7 @@ class ScaeAdvTrain(_ModelCollector):
 
 	def save_model(self, path):
 		return ScaeBasement.save_model(self, path)
-	# -----------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------------
 
 
 class ScaeDistTrain(_ModelCollector):
@@ -343,33 +342,34 @@ class ScaeDistTrain(_ModelCollector):
 		self._valid_shape = scae._valid_shape
 
 		with self._sess.graph.as_default():
-			self._model = _stacked_capsule_autoencoder(scae._input_size[1],  # Assume width equals height
-			                                           scae._template_size,
-			                                           scae._n_part_caps,
-			                                           scae._n_part_caps_dims,
-			                                           scae._n_part_special_features,
-			                                           scae._part_encoder_noise_scale,
-			                                           scae._n_channels,
-			                                           scae._colorize_templates,
-			                                           scae._use_alpha_channel,
-			                                           scae._template_nonlin,
-			                                           scae._color_nonlin,
-			                                           scae._n_obj_caps,
-			                                           scae._n_obj_caps_params,
-			                                           scae._obj_decoder_noise_type,
-			                                           scae._obj_decoder_noise_scale,
-			                                           scae._num_classes,
-			                                           scae._prior_within_example_sparsity_weight,
-			                                           scae._prior_between_example_sparsity_weight,
-			                                           scae._posterior_within_example_sparsity_weight,
-			                                           scae._posterior_between_example_sparsity_weight,
-			                                           scae._set_transformer_n_layers,
-			                                           scae._set_transformer_n_heads,
-			                                           scae._set_transformer_n_dims,
-			                                           scae._set_transformer_n_output_dims,
-			                                           scae._part_cnn_strides,
-			                                           scae._prep,
-			                                           scope_teacher)
+			self._model = _scae(scae._input_size[1],  # Assume width equals height
+			                    scae._template_size,
+			                    scae._n_part_caps,
+			                    scae._n_part_caps_dims,
+			                    scae._n_part_special_features,
+			                    scae._part_encoder_noise_scale,
+			                    scae._n_channels,
+			                    scae._colorize_templates,
+			                    scae._use_alpha_channel,
+			                    scae._template_nonlin,
+			                    scae._color_nonlin,
+			                    scae._n_obj_caps,
+			                    scae._n_obj_caps_params,
+			                    scae._obj_decoder_noise_type,
+			                    scae._obj_decoder_noise_scale,
+			                    scae._num_classes,
+			                    scae._prior_within_example_sparsity_weight,
+			                    scae._prior_between_example_sparsity_weight,
+			                    scae._posterior_within_example_sparsity_weight,
+			                    scae._posterior_between_example_sparsity_weight,
+			                    scae._set_transformer_n_layers,
+			                    scae._set_transformer_n_heads,
+			                    scae._set_transformer_n_dims,
+			                    scae._set_transformer_n_output_dims,
+			                    scae._part_cnn_strides,
+			                    scae._prep,
+			                    scope_teacher)
+
 			self._input_stu = scae._input
 			self._input_tch = tf.placeholder(tf.float32, scae._input_size)
 			self._label = scae._label
@@ -380,6 +380,7 @@ class ScaeDistTrain(_ModelCollector):
 			# alias
 			self._input = self._input_tch
 			self._res = self._res_tch
+			self._is_training = False
 
 			learning_rate = scae._learning_rate
 			if scae._use_lr_schedule:
@@ -448,4 +449,4 @@ class ScaeDistTrain(_ModelCollector):
 
 	def simple_test(self, dataset: DatasetHelper):
 		return ScaeBasement.simple_test(self, dataset)
-	# -----------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------------

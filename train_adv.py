@@ -10,12 +10,12 @@ from utilities import ScaeAdvTrain, Configs
 
 
 def build_from_config(
-		config,
-		batch_size,
-		is_training=False,
-		learning_rate=1e-4,
-		use_lr_schedule=True,
-		snapshot=None
+	config,
+	batch_size,
+	is_training=False,
+	learning_rate=1e-4,
+	use_lr_schedule=True,
+	snapshot=None
 ):
 	return ScaeAdvTrain(
 		input_size=[batch_size, config['canvas_size'], config['canvas_size'], config['n_channels']],

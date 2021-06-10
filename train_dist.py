@@ -3,21 +3,20 @@ import os
 import numpy as np
 from tqdm import tqdm
 
-from SCAE.tools.model import ScaeBasement
-from utilities import ScaeDistTrain, Configs
-from SCAE.tools.utilities import block_warnings, DatasetHelper
-import abc
 from SCAE.attack_cw import AttackerCW
+from SCAE.tools.model import ScaeBasement
+from SCAE.tools.utilities import block_warnings, DatasetHelper
+from utilities import ScaeDistTrain, Configs
 
 
 def build_from_config(
-		config,
-		batch_size,
-		is_training=False,
-		learning_rate=1e-4,
-		scope='SCAE',
-		use_lr_schedule=True,
-		snapshot=None
+	config,
+	batch_size,
+	is_training=False,
+	learning_rate=1e-4,
+	scope='SCAE',
+	use_lr_schedule=True,
+	snapshot=None
 ):
 	return ScaeBasement(
 		input_size=[batch_size, config['canvas_size'], config['canvas_size'], config['n_channels']],
@@ -33,9 +32,9 @@ def build_from_config(
 		template_size=config['template_size'],
 		template_nonlin=config['template_nonlin'],
 		color_nonlin=config['color_nonlin'],
-		part_encoder_noise_scale=config['part_encoder_noise_scale'] if is_training else 0.,
-		obj_decoder_noise_type=config['obj_decoder_noise_type'] if is_training else None,
-		obj_decoder_noise_scale=config['obj_decoder_noise_scale'] if is_training else 0.,
+		part_encoder_noise_scale=0.,
+		obj_decoder_noise_type=None,
+		obj_decoder_noise_scale=0.,
 		set_transformer_n_layers=config['set_transformer_n_layers'],
 		set_transformer_n_heads=config['set_transformer_n_heads'],
 		set_transformer_n_dims=config['set_transformer_n_dims'],
@@ -57,8 +56,8 @@ if __name__ == '__main__':
 	batch_size = 100
 	max_train_steps = 300
 	learning_rate = 3e-5
-	snapshot_student = './checkpoints/{}_distillation/model.ckpt'.format(dataset)
-	snapshot_teacher = '../train/checkpoints/{}/model.ckpt'.format(dataset)
+	snapshot_student = './checkpoints/{}_distillation/model.ckpt'.format(config['dataset'])
+	snapshot_teacher = './checkpoints/{}/model.ckpt'.format(config['dataset'])
 	num_batches_per_adv_train = 2
 
 	# Attack configuration
