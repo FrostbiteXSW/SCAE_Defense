@@ -55,7 +55,7 @@ if __name__ == '__main__':
 	batch_size = 100
 	max_train_steps = 300
 	learning_rate = 3e-5
-	snapshot = './checkpoints/{}/model.ckpt'.format(config['dataset'])
+	snapshot = './checkpoints/{}_adv/model.ckpt'.format(config['dataset'])
 	num_adv_images = 100
 
 	num_epochs = 5

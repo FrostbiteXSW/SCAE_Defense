@@ -54,9 +54,9 @@ if __name__ == '__main__':
 
 	config = Configs.config_mnist
 	batch_size = 100
-	max_train_steps = 300
+	max_train_steps = 50
 	learning_rate = 3e-5
-	snapshot_student = './checkpoints/{}_distillation/model.ckpt'.format(config['dataset'])
+	snapshot_student = './checkpoints/{}_dist/model.ckpt'.format(config['dataset'])
 	snapshot_teacher = './checkpoints/{}/model.ckpt'.format(config['dataset'])
 	num_batches_per_adv_train = 2
 
