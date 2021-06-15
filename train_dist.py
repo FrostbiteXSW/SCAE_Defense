@@ -57,7 +57,7 @@ if __name__ == '__main__':
 	max_train_steps = 50
 	learning_rate = 3e-5
 	snapshot_student = './checkpoints/{}_dist/model.ckpt'.format(config['dataset'])
-	snapshot_teacher = './checkpoints/{}/model.ckpt'.format(config['dataset'])
+	snapshot_teacher = './SCAE/checkpoints/{}/model.ckpt'.format(config['dataset'])
 	num_batches_per_adv_train = 2
 
 	# Attack configuration
@@ -92,12 +92,12 @@ if __name__ == '__main__':
 	student.finalize()
 
 	trainset = DatasetHelper(config['dataset'], 'train', shape=[config['canvas_size']] * 2,
-	                         file_path='./datasets', save_after_load=True,
+	                         file_path='./SCAE/datasets', save_after_load=True,
 	                         batch_size=batch_size, shuffle=True, fill_batch=True,
 	                         normalize=True if config['dataset'] == Configs.GTSRB else False,
 	                         gtsrb_raw_file_path=Configs.GTSRB_DATASET_PATH, gtsrb_classes=Configs.GTSRB_CLASSES)
 	testset = DatasetHelper(config['dataset'], 'test', shape=[config['canvas_size']] * 2,
-	                        file_path='./datasets', save_after_load=True,
+	                        file_path='./SCAE/datasets', save_after_load=True,
 	                        batch_size=batch_size, fill_batch=True,
 	                        normalize=True if config['dataset'] == Configs.GTSRB else False,
 	                        gtsrb_raw_file_path=Configs.GTSRB_DATASET_PATH, gtsrb_classes=Configs.GTSRB_CLASSES)
