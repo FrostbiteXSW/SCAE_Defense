@@ -1,8 +1,4 @@
-import os
-import time
-
 import numpy as np
-from tqdm import trange
 
 from SCAE.attack_cw import AttackerCW
 from SCAE.tools.model import Attacker, KMeans
@@ -19,7 +15,7 @@ if __name__ == '__main__':
 	batch_size = 100
 	classifier = Attacker.Classifiers.PosK
 	use_mask = True
-	pert_percentile = 0.95
+	pert_percentile = 0.9
 
 	snapshot_stu = './checkpoints/{}_dist/model.ckpt'.format(config['dataset'])
 	snapshot_kmeans_stu = './checkpoints/{}_dist/kmeans_{}/model.ckpt'.format(
@@ -161,7 +157,7 @@ if __name__ == '__main__':
 	print('Pert threshold is {:.4f} (according to {} samples)\n'.format(pert_threshold, tch_succeed_count))
 
 	# Judge success rate
-	for i in trange(num_samples, desc='Computing final results'):
+	for i in range(num_samples):
 		if True not in np.isnan(stu_pert_images[i]):
 			# L2 distance between pert_image and source_image
 			pert_amount = np.linalg.norm(stu_pert_images[i] - stu_source_images[i])
