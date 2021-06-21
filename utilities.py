@@ -458,7 +458,7 @@ def draw_pdf(xmax, labels, *data):
 		label = labels[i]
 
 		_data = np.sort(_data)
-		probability = [i / len(_data) for i in range(len(_data))]
+		probability = [(i + 1) / len(_data) for i in range(len(_data))]
 		plt.plot(_data, probability, label=label)
 
 	plt.xlim((0, xmax))
