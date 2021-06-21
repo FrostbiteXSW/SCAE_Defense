@@ -95,13 +95,6 @@ if __name__ == '__main__':
 	tch_succeed_count = 0
 	stu_classification_error_count = 0
 
-	# Variables to save the attack result
-	succeed_count = 0
-	succeed_pert_amount = []
-	succeed_pert_robustness = []
-	source_images = []
-	pert_images = []
-
 	# Classification accuracy test
 	model_stu.simple_test(dataset)
 	model_tch.simple_test(dataset)
@@ -121,7 +114,7 @@ if __name__ == '__main__':
 				to_collect=model_stu._res.prior_cls_pred if classifier == Attacker.Classifiers.PriL
 				else model_stu._res.posterior_cls_pred
 			) == labels
-			
+
 		# Judge teacher classification
 		if classifier[-1].upper() == 'K':
 			right_classification_tch = kmeans_tch(images) == labels
@@ -156,6 +149,13 @@ if __name__ == '__main__':
 	tch_pert_amount = np.sort(tch_pert_amount)
 	pert_threshold = tch_pert_amount[int(tch_succeed_count * pert_percentile)]
 	print('Pert threshold is {:.4f} (according to {} samples)\n'.format(pert_threshold, tch_succeed_count))
+
+	# Variables to save the attack result
+	succeed_count = 0
+	succeed_pert_amount = []
+	succeed_pert_robustness = []
+	source_images = []
+	pert_images = []
 
 	# Judge success rate
 	for i in range(num_samples):

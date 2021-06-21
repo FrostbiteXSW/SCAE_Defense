@@ -94,13 +94,6 @@ if __name__ == '__main__':
 	tch_succeed_count = 0
 	stu_classification_error_count = 0
 
-	# Variables to save the attack result
-	succeed_count = 0
-	succeed_pert_amount = []
-	succeed_pert_robustness = []
-	source_images = []
-	pert_images = []
-
 	# Classification accuracy test
 	model_stu.simple_test(dataset)
 	model_tch.simple_test(dataset)
@@ -156,6 +149,13 @@ if __name__ == '__main__':
 	pert_threshold = tch_pert_amount[int(tch_succeed_count * pert_percentile)]
 	print('Pert threshold is {:.4f} (according to {} samples)\n'.format(pert_threshold, tch_succeed_count))
 
+	# Variables to save the attack result
+	succeed_count = 0
+	succeed_pert_amount = []
+	succeed_pert_robustness = []
+	source_images = []
+	pert_images = []
+
 	# Judge success rate
 	for i in range(num_samples):
 		if True not in np.isnan(stu_pert_images[i]):
@@ -196,6 +196,6 @@ if __name__ == '__main__':
 
 	# Print and save results
 	print(result)
-	path = result.save('./results/bim/')
+	path = result.save('./results/cw/')
 	np.savez_compressed(path + 'source_images.npz', source_images=np.array(source_images, dtype=np.float32))
 	np.savez_compressed(path + 'pert_images.npz', pert_images=np.array(pert_images, dtype=np.float32))
