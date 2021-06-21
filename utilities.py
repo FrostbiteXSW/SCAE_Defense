@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+import numpy as np
 import sonnet as snt
 import tensorflow as tf
 
@@ -326,7 +328,6 @@ class ScaeAdvTrain(_ModelCollector):
 
 	def save_model(self, path):
 		return ScaeBasement.save_model(self, path)
-# -----------------------------------------------------------------------------------------------------------
 
 
 class ScaeDistTrain(_ModelCollector):
@@ -449,4 +450,21 @@ class ScaeDistTrain(_ModelCollector):
 
 	def simple_test(self, dataset: DatasetHelper):
 		return ScaeBasement.simple_test(self, dataset)
-# -----------------------------------------------------------------------------------------------------------
+
+
+def draw_pdf(xmax, labels, *data):
+	for i in range(len(labels)):
+		_data = data[i]
+		label = labels[i]
+
+		_data = np.sort(_data)
+		probability = [i / len(_data) for i in range(len(_data))]
+		plt.plot(_data, probability, label=label)
+
+	plt.xlim((0, xmax))
+	plt.xlabel('Pert Amount Threshold')
+	plt.ylim((0, 1))
+	plt.ylabel('Attack Success Rate')
+	plt.legend(loc=2)
+	plt.grid()
+	plt.show()

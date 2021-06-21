@@ -4,6 +4,7 @@ from SCAE.attack_cw import AttackerCW
 from SCAE.tools.model import Attacker, KMeans
 from SCAE.tools.utilities import block_warnings, DatasetHelper, ResultBuilder
 from train_dist import Configs, build_from_config
+from utilities import draw_pdf
 
 if __name__ == '__main__':
 	block_warnings()
@@ -15,69 +16,68 @@ if __name__ == '__main__':
 	batch_size = 100
 	classifier = Attacker.Classifiers.PosK
 	use_mask = True
-	pert_percentile = 0.9
 
-	snapshot_stu = './checkpoints/{}_dist/model.ckpt'.format(config['dataset'])
-	snapshot_kmeans_stu = './checkpoints/{}_dist/kmeans_{}/model.ckpt'.format(
+	snapshot_rob = './checkpoints/{}_dist/model.ckpt'.format(config['dataset'])
+	snapshot_kmeans_rob = './checkpoints/{}_dist/kmeans_{}/model.ckpt'.format(
 		config['dataset'], 'pri' if classifier[:3].upper() == 'PRI' else 'pos')
 
-	snapshot_tch = './SCAE/checkpoints/{}/model.ckpt'.format(config['dataset'])
-	snapshot_kmeans_tch = './SCAE/checkpoints/{}/kmeans_{}/model.ckpt'.format(
+	snapshot_ori = './SCAE/checkpoints/{}/model.ckpt'.format(config['dataset'])
+	snapshot_kmeans_ori = './SCAE/checkpoints/{}/kmeans_{}/model.ckpt'.format(
 		config['dataset'], 'pri' if classifier[:3].upper() == 'PRI' else 'pos')
 
-	# Create student attack model
-	model_stu = build_from_config(
+	# Create original model
+	model_ori = build_from_config(
 		config=config,
 		batch_size=batch_size,
 		is_training=False,
-		snapshot=snapshot_stu,
-		scope='STU'
-	)
-
-	if classifier[-1].upper() == 'K':
-		kmeans_stu = KMeans(
-			scae=model_stu,
-			kmeans_type=KMeans.KMeansTypes.Prior if classifier[:3].upper() == 'PRI' else KMeans.KMeansTypes.Posterior,
-			is_training=False,
-			scope='KMeans_Pri' if classifier[:3].upper() == 'PRI' else 'KMeans_Pos',
-			snapshot=snapshot_kmeans_stu
-		)
-
-	attacker_stu = AttackerCW(
-		scae=model_stu,
-		optimizer_config=optimizer_config,
-		classifier=classifier,
-		kmeans_classifier=kmeans_stu if classifier[-1].upper() == 'K' else None
-	)
-
-	model_stu.finalize()
-
-	# Create teacher attack model
-	model_tch = build_from_config(
-		config=config,
-		batch_size=batch_size,
-		is_training=False,
-		snapshot=snapshot_tch,
+		snapshot=snapshot_ori,
 		scope='SCAE'
 	)
 
 	if classifier[-1].upper() == 'K':
-		kmeans_tch = KMeans(
-			scae=model_tch,
+		kmeans_ori = KMeans(
+			scae=model_ori,
 			kmeans_type=KMeans.KMeansTypes.Prior if classifier[:3].upper() == 'PRI' else KMeans.KMeansTypes.Posterior,
 			is_training=False,
 			scope='KMeans_Pri' if classifier[:3].upper() == 'PRI' else 'KMeans_Pos',
-			snapshot=snapshot_kmeans_tch
+			snapshot=snapshot_kmeans_ori
 		)
 
-	attacker_tch = AttackerCW(
-		scae=model_tch,
+	attacker_ori = AttackerCW(
+		scae=model_ori,
 		optimizer_config=optimizer_config,
 		classifier=classifier,
-		kmeans_classifier=kmeans_tch if classifier[-1].upper() == 'K' else None
+		kmeans_classifier=kmeans_ori if classifier[-1].upper() == 'K' else None
 	)
 
-	model_tch.finalize()
+	model_ori.finalize()
+
+	# Create robust model
+	model_rob = build_from_config(
+		config=config,
+		batch_size=batch_size,
+		is_training=False,
+		snapshot=snapshot_rob,
+		scope='STU'
+	)
+
+	if classifier[-1].upper() == 'K':
+		kmeans_rob = KMeans(
+			scae=model_rob,
+			kmeans_type=KMeans.KMeansTypes.Prior if classifier[:3].upper() == 'PRI' else KMeans.KMeansTypes.Posterior,
+			is_training=False,
+			scope='KMeans_Pri' if classifier[:3].upper() == 'PRI' else 'KMeans_Pos',
+			snapshot=snapshot_kmeans_rob
+		)
+
+	attacker_rob = AttackerCW(
+		scae=model_rob,
+		optimizer_config=optimizer_config,
+		classifier=classifier,
+		kmeans_classifier=kmeans_rob if classifier[-1].upper() == 'K' else None
+	)
+
+	model_rob.finalize()
 
 	# Load dataset
 	dataset = DatasetHelper(config['dataset'],
@@ -87,115 +87,146 @@ if __name__ == '__main__':
 	                        normalize=True if config['dataset'] == Configs.GTSRB else False,
 	                        gtsrb_raw_file_path=Configs.GTSRB_DATASET_PATH, gtsrb_classes=Configs.GTSRB_CLASSES)
 
-	# Temporary results
-	stu_source_images = []
-	stu_pert_images = []
-	tch_pert_amount = []
-	tch_succeed_count = 0
-	stu_classification_error_count = 0
+	# Variables to save the attack result
+	ori_succeed_count = 0
+	ori_succeed_pert_amount = []
+	ori_succeed_pert_robustness = []
+	ori_source_images = []
+	ori_pert_images = []
+
+	rob_succeed_count = 0
+	rob_succeed_pert_amount = []
+	rob_succeed_pert_robustness = []
+	rob_source_images = []
+	rob_pert_images = []
+
+	# Variables to draw the plot
+	ori_pert_amount = []
+	rob_pert_amount = []
 
 	# Classification accuracy test
-	model_stu.simple_test(dataset)
-	model_tch.simple_test(dataset)
+	print('Testing original model...')
+	model_ori.simple_test(dataset)
+	print('\nTesting robust model...')
+	model_rob.simple_test(dataset)
 
-	# Start the attack on selected samples
+	# Start the attack on the original model
+	print('\nStart the attack on the original model...')
 	dataset = iter(dataset)
 	remain = num_samples
 	while remain > 0:
 		images, labels = next(dataset)
 
-		# Judge student classification
+		# Judge classification
 		if classifier[-1].upper() == 'K':
-			right_classification_stu = kmeans_stu(images) == labels
+			right_classification = kmeans_ori(images) == labels
 		else:
-			right_classification_stu = model_stu.run(
+			right_classification = model_ori.run(
 				images=images,
-				to_collect=model_stu._res.prior_cls_pred if classifier == Attacker.Classifiers.PriL
-				else model_stu._res.posterior_cls_pred
+				to_collect=model_ori._res.prior_cls_pred if classifier == Attacker.Classifiers.PriL
+				else model_ori._res.posterior_cls_pred
 			) == labels
 
-		# Judge teacher classification
-		if classifier[-1].upper() == 'K':
-			right_classification_tch = kmeans_tch(images) == labels
-		else:
-			right_classification_tch = model_tch.run(
-				images=images,
-				to_collect=model_tch._res.prior_cls_pred if classifier == Attacker.Classifiers.PriL
-				else model_tch._res.posterior_cls_pred
-			) == labels
+		attacker_outputs = attacker_ori(images, labels, nan_if_fail=True, verbose=True)
 
-		output_stu = attacker_stu(images, labels, nan_if_fail=True, verbose=True)
-		output_tch = attacker_tch(images, labels, nan_if_fail=True, verbose=True)
-
-		for i in range(batch_size):
-			if right_classification_tch[i] and remain:
+		for i in range(len(attacker_outputs)):
+			if right_classification[i] and remain:
 				remain -= 1
-				stu_source_images.append(images[i])
+				if True not in np.isnan(attacker_outputs[i]):
+					# L2 distance between pert_image and source_image
+					pert_amount = np.linalg.norm(attacker_outputs[i] - images[i])
+					pert_robustness = pert_amount / np.linalg.norm(images[i])
 
-				if True not in np.isnan(output_tch[i]):
-					tch_succeed_count += 1
-					tch_pert_amount.append(np.linalg.norm(output_tch[i] - images[i]))
+					ori_succeed_count += 1
+					ori_succeed_pert_amount.append(pert_amount)
+					ori_succeed_pert_robustness.append(pert_robustness)
 
-				if right_classification_stu[i]:
-					stu_pert_images.append(output_stu[i])
+					ori_source_images.append(images[i])
+					ori_pert_images.append(attacker_outputs[i])
+
+					ori_pert_amount.append(pert_amount)
 				else:
-					stu_classification_error_count += 1
-					stu_pert_images.append(images[i])
+					ori_pert_amount.append(np.inf)
 
-		print('Remain: {}, student classification error count: {}\n'.format(remain, stu_classification_error_count))
+		print('Up to now: Success rate: {:.4f}. Average pert amount: {:.4f}. Remain: {}.'.format(
+			ori_succeed_count / (num_samples - remain), np.array(ori_succeed_pert_amount, dtype=np.float32).mean(), remain))
 
-	# Compute pert threshold
-	tch_pert_amount = np.sort(tch_pert_amount)
-	pert_threshold = tch_pert_amount[int(tch_succeed_count * pert_percentile)]
-	print('Pert threshold is {:.4f} (according to {} samples)\n'.format(pert_threshold, tch_succeed_count))
+	# Start the attack on the robust model
+	print('\nStart the attack on the robust model...')
+	dataset = iter(dataset)
+	remain = num_samples
+	while remain > 0:
+		images, labels = next(dataset)
 
-	# Variables to save the attack result
-	succeed_count = 0
-	succeed_pert_amount = []
-	succeed_pert_robustness = []
-	source_images = []
-	pert_images = []
+		# Judge classification
+		if classifier[-1].upper() == 'K':
+			right_classification = kmeans_rob(images) == labels
+		else:
+			right_classification = model_rob.run(
+				images=images,
+				to_collect=model_rob._res.prior_cls_pred if classifier == Attacker.Classifiers.PriL
+				else model_rob._res.posterior_cls_pred
+			) == labels
 
-	# Judge success rate
-	for i in range(num_samples):
-		if True not in np.isnan(stu_pert_images[i]):
-			# L2 distance between pert_image and source_image
-			pert_amount = np.linalg.norm(stu_pert_images[i] - stu_source_images[i])
+		attacker_outputs = attacker_rob(images, labels, nan_if_fail=True, verbose=True)
 
-			if pert_amount <= pert_threshold:
-				pert_robustness = pert_amount / np.linalg.norm(stu_source_images[i])
+		for i in range(len(attacker_outputs)):
+			if right_classification[i] and remain:
+				remain -= 1
+				if True not in np.isnan(attacker_outputs[i]):
+					# L2 distance between pert_image and source_image
+					pert_amount = np.linalg.norm(attacker_outputs[i] - images[i])
+					pert_robustness = pert_amount / np.linalg.norm(images[i])
 
-				succeed_count += 1
-				succeed_pert_amount.append(pert_amount)
-				succeed_pert_robustness.append(pert_robustness)
+					rob_succeed_count += 1
+					rob_succeed_pert_amount.append(pert_amount)
+					rob_succeed_pert_robustness.append(pert_robustness)
 
-				source_images.append(stu_source_images[i])
-				pert_images.append(stu_pert_images[i])
+					rob_source_images.append(images[i])
+					rob_pert_images.append(attacker_outputs[i])
+
+					rob_pert_amount.append(pert_amount)
+				else:
+					rob_pert_amount.append(np.inf)
+
+		print('Up to now: Success rate: {:.4f}. Average pert amount: {:.4f}. Remain: {}.'.format(
+			rob_succeed_count / (num_samples - remain), np.array(rob_succeed_pert_amount, dtype=np.float32).mean(), remain))
+
+	# Draw plot
+	draw_pdf(5, ['Original Model', 'Robust Model'], ori_pert_amount, rob_pert_amount)
 
 	# Change list into numpy array
-	succeed_pert_amount = np.array(succeed_pert_amount, dtype=np.float32)
-	succeed_pert_robustness = np.array(succeed_pert_robustness, dtype=np.float32)
+	ori_succeed_pert_amount = np.array(ori_succeed_pert_amount, dtype=np.float32)
+	ori_succeed_pert_robustness = np.array(ori_succeed_pert_robustness, dtype=np.float32)
+	rob_succeed_pert_amount = np.array(rob_succeed_pert_amount, dtype=np.float32)
+	rob_succeed_pert_robustness = np.array(rob_succeed_pert_robustness, dtype=np.float32)
 
 	# Save the final result of complete attack
 	result = ResultBuilder()
 	result['Dataset'] = config['dataset']
 	result['Classifier'] = classifier
 	result['Num of samples'] = num_samples
-	result['Pert threshold'] = pert_threshold
 
 	# Attacker params
 	result['Optimizer config'] = optimizer_config
 
 	# Attack results
-	result['Success rate on original model'] = tch_succeed_count / num_samples
-	result['Success rate on robust model'] = succeed_count / num_samples
-	result['Average pert amount'] = succeed_pert_amount.mean()
-	result['Pert amount standard deviation'] = succeed_pert_amount.std()
-	result['Average pert robustness'] = succeed_pert_robustness.mean()
-	result['Pert robustness standard deviation'] = succeed_pert_robustness.std()
+	result['[ORI]Success rate'] = ori_succeed_count / num_samples
+	result['[ORI]Average pert amount'] = ori_succeed_pert_amount.mean()
+	result['[ORI]Pert amount standard deviation'] = ori_succeed_pert_amount.std()
+	result['[ORI]Average pert robustness'] = ori_succeed_pert_robustness.mean()
+	result['[ORI]Pert robustness standard deviation'] = ori_succeed_pert_robustness.std()
+
+	result['[ROB]Success rate'] = rob_succeed_count / num_samples
+	result['[ROB]Average pert amount'] = rob_succeed_pert_amount.mean()
+	result['[ROB]Pert amount standard deviation'] = rob_succeed_pert_amount.std()
+	result['[ROB]Average pert robustness'] = rob_succeed_pert_robustness.mean()
+	result['[ROB]Pert robustness standard deviation'] = rob_succeed_pert_robustness.std()
 
 	# Print and save results
 	print(result)
 	path = result.save('./results/cw/')
-	np.savez_compressed(path + 'source_images.npz', source_images=np.array(source_images, dtype=np.float32))
-	np.savez_compressed(path + 'pert_images.npz', pert_images=np.array(pert_images, dtype=np.float32))
+	np.savez_compressed(path + 'ori_source_images.npz', source_images=np.array(ori_source_images, dtype=np.float32))
+	np.savez_compressed(path + 'ori_pert_images.npz', pert_images=np.array(ori_pert_images, dtype=np.float32))
+	np.savez_compressed(path + 'rob_source_images.npz', source_images=np.array(rob_source_images, dtype=np.float32))
+	np.savez_compressed(path + 'rob_pert_images.npz', pert_images=np.array(rob_pert_images, dtype=np.float32))
