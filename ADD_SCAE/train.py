@@ -1,22 +1,26 @@
 import os
 
-import numpy as np
 from tqdm import tqdm
 
+from ADD_SCAE.tools.model import ScaeAdvDefDist
 from SCAE.attack_cw import AttackerCW
 from SCAE.tools.model import ScaeBasement
-from SCAE.tools.utilities import block_warnings, DatasetHelper
-from utilities import ScaeDistTrain, Configs
+from SCAE.tools.utilities import block_warnings
+from tools.utilities import *
+
+# File paths
+snapshot_student = './checkpoints/{}/model.ckpt'
+snapshot_teacher = '../SCAE/checkpoints/{}/model.ckpt'
 
 
 def build_from_config(
-	config,
-	batch_size,
-	is_training=False,
-	learning_rate=1e-4,
-	scope='SCAE',
-	use_lr_schedule=True,
-	snapshot=None
+		config,
+		batch_size,
+		is_training=False,
+		learning_rate=1e-4,
+		scope='SCAE',
+		use_lr_schedule=True,
+		snapshot=None
 ):
 	return ScaeBasement(
 		input_size=[batch_size, config['canvas_size'], config['canvas_size'], config['n_channels']],
@@ -56,8 +60,8 @@ if __name__ == '__main__':
 	batch_size = 100
 	max_train_steps = 50
 	learning_rate = 3e-5
-	snapshot_student = './checkpoints/{}_dist/model.ckpt'.format(config['dataset'])
-	snapshot_teacher = './SCAE/checkpoints/{}/model.ckpt'.format(config['dataset'])
+	snapshot_student = snapshot_student.format(config['dataset'])
+	snapshot_teacher = snapshot_teacher.format(config['dataset'])
 	num_batches_per_adv_train = 2
 
 	# Attack configuration
@@ -77,7 +81,7 @@ if __name__ == '__main__':
 		use_lr_schedule=True
 	)
 
-	teacher = ScaeDistTrain(
+	teacher = ScaeAdvDefDist(
 		scae=student,
 		scope_teacher='SCAE',
 		snapshot_teacher=snapshot_teacher
@@ -92,15 +96,15 @@ if __name__ == '__main__':
 	student.finalize()
 
 	trainset = DatasetHelper(config['dataset'], 'train', shape=[config['canvas_size']] * 2,
-	                         file_path='./SCAE/datasets', save_after_load=True,
+	                         file_path=dataset_path, save_after_load=True,
 	                         batch_size=batch_size, shuffle=True, fill_batch=True,
 	                         normalize=True if config['dataset'] == Configs.GTSRB else False,
-	                         gtsrb_raw_file_path=Configs.GTSRB_DATASET_PATH, gtsrb_classes=Configs.GTSRB_CLASSES)
+	                         gtsrb_raw_file_path=gtsrb_dataset_path, gtsrb_classes=Configs.GTSRB_CLASSES)
 	testset = DatasetHelper(config['dataset'], 'test', shape=[config['canvas_size']] * 2,
-	                        file_path='./SCAE/datasets', save_after_load=True,
+	                        file_path=dataset_path, save_after_load=True,
 	                        batch_size=batch_size, fill_batch=True,
 	                        normalize=True if config['dataset'] == Configs.GTSRB else False,
-	                        gtsrb_raw_file_path=Configs.GTSRB_DATASET_PATH, gtsrb_classes=Configs.GTSRB_CLASSES)
+	                        gtsrb_raw_file_path=gtsrb_dataset_path, gtsrb_classes=Configs.GTSRB_CLASSES)
 
 	teacher.simple_test(testset)
 

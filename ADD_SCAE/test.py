@@ -1,13 +1,20 @@
 import os
 
 from SCAE.test import test
-from utilities import Configs
+from tools.utilities import *
+
+# File paths
+snapshot = './checkpoints/{}/model.ckpt'
+snapshot_kmeans_pri = './checkpoints/{}/kmeans_pri/model.ckpt'
+snapshot_kmeans_pos = './checkpoints/{}/kmeans_pos/model.ckpt'
 
 if __name__ == '__main__':
+	Configs.GTSRB_DATASET_PATH = gtsrb_dataset_path
+
 	config = Configs.config_mnist
-	snapshot = './checkpoints/{}_dist/model.ckpt'.format(config['dataset'])
-	snapshot_kmeans_pri = './checkpoints/{}_dist/kmeans_pri/model.ckpt'.format(config['dataset'])
-	snapshot_kmeans_pos = './checkpoints/{}_dist/kmeans_pos/model.ckpt'.format(config['dataset'])
+	snapshot = snapshot.format(config['dataset'])
+	snapshot_kmeans_pri = snapshot_kmeans_pri.format(config['dataset'])
+	snapshot_kmeans_pos = snapshot_kmeans_pos.format(config['dataset'])
 	train_and_save_kmeans = not (os.path.exists(snapshot_kmeans_pri[:snapshot_kmeans_pri.rindex('/')])
 	                             and os.path.exists(snapshot_kmeans_pos[:snapshot_kmeans_pos.rindex('/')]))
 
@@ -17,6 +24,6 @@ if __name__ == '__main__':
 		snapshot=snapshot,
 		snapshot_kmeans_pri=snapshot_kmeans_pri,
 		snapshot_kmeans_pos=snapshot_kmeans_pos,
-		dataset_path='./SCAE/datasets',
+		dataset_path=dataset_path,
 		train_and_save_kmeans=train_and_save_kmeans
 	)
