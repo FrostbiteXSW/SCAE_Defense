@@ -2,7 +2,7 @@ from SCAE.attack_cw import AttackerCW
 from SCAE.tools.model import KMeans
 from SCAE.tools.utilities import block_warnings, ResultBuilder
 from SCAE.train import build_from_config
-from tools.utilities import *
+from utilities import *
 
 # File paths
 result_path = './results/cw/'

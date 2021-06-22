@@ -1,7 +1,7 @@
 import os
 
 from SCAE.test import test
-from tools.utilities import *
+from utilities import *
 
 # File paths
 snapshot = './checkpoints/{}/model.ckpt'
