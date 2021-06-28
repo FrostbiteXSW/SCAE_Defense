@@ -16,7 +16,7 @@ dataset_path = '../SCAE/datasets/'
 gtsrb_dataset_path = '../SCAE/datasets/GTSRB-for-SCAE_Attack/GTSRB/'
 
 
-class ScaeAdvDefDist(_ModelCollector):
+class ScaeDefDist(_ModelCollector):
 	def __init__(
 			self,
 			scae: ScaeBasement,
@@ -181,7 +181,7 @@ def build_from_config(
 if __name__ == '__main__':
 	block_warnings()
 
-	config = Configs.config_mnist
+	config = Configs.config_fashion_mnist
 	batch_size = 100
 	max_train_steps = 50
 	learning_rate = 3e-5
@@ -206,7 +206,7 @@ if __name__ == '__main__':
 		use_lr_schedule=True
 	)
 
-	teacher = ScaeAdvDefDist(
+	teacher = ScaeDefDist(
 		scae=student,
 		scope_teacher='SCAE',
 		snapshot_teacher=snapshot_teacher

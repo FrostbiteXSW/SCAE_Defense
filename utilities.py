@@ -10,8 +10,8 @@ snapshot_ori = '../SCAE/checkpoints/{}/model.ckpt'
 snapshot_kmeans_ori = '../SCAE/checkpoints/{}/kmeans_{}/model.ckpt'
 snapshot_rob = './checkpoints/{}/model.ckpt'
 snapshot_kmeans_rob = './checkpoints/{}/kmeans_{}/model.ckpt'
-dataset_path = 'SCAE/datasets/'
-gtsrb_dataset_path = 'SCAE/datasets/GTSRB-for-SCAE_Attack/GTSRB/'
+dataset_path = '../SCAE/datasets/'
+gtsrb_dataset_path = '../SCAE/datasets/GTSRB-for-SCAE_Attack/GTSRB/'
 
 
 def attack(
@@ -75,7 +75,7 @@ def load_dataset(config, batch_size):
 	return DatasetHelper(config['dataset'],
 	                     'train' if config['dataset'] == Configs.GTSRB
 	                                or config['dataset'] == Configs.FASHION_MNIST else 'test',
-	                     file_path='SCAE/datasets', batch_size=batch_size, shuffle=True, fill_batch=True,
+	                     file_path=dataset_path, batch_size=batch_size, shuffle=True, fill_batch=True,
 	                     normalize=True if config['dataset'] == Configs.GTSRB else False,
 	                     gtsrb_raw_file_path=gtsrb_dataset_path, gtsrb_classes=Configs.GTSRB_CLASSES)
 
