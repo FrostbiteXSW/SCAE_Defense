@@ -80,7 +80,7 @@ def load_dataset(config, batch_size):
 	                     gtsrb_raw_file_path=gtsrb_dataset_path, gtsrb_classes=Configs.GTSRB_CLASSES)
 
 
-def draw_pdf(xmax, labels, *data):
+def draw_pdf(xmax, labels, data, file_path=None):
 	for i in range(len(labels)):
 		_data = data[i]
 		label = labels[i]
@@ -95,4 +95,10 @@ def draw_pdf(xmax, labels, *data):
 	plt.ylabel('Attack Success Rate')
 	plt.legend(loc=2)
 	plt.grid()
-	plt.show()
+
+	if file_path is not None:
+		figure = plt.gcf()
+		plt.show()
+		figure.savefig(file_path, bbox_inches='tight')
+	else:
+		plt.show()

@@ -131,9 +131,6 @@ if __name__ == '__main__':
 	                           pert_image_list=rob_pert_images,
 	                           pert_amount_list=rob_pert_amount)
 
-	# Draw plot
-	draw_pdf(5, ['Original Model', 'Robust Model'], ori_pert_amount, rob_pert_amount)
-
 	# Change list into numpy array
 	ori_succeed_pert_amount = np.array(ori_succeed_pert_amount, dtype=np.float32)
 	ori_succeed_pert_robustness = np.array(ori_succeed_pert_robustness, dtype=np.float32)
@@ -170,3 +167,6 @@ if __name__ == '__main__':
 	np.savez_compressed(path + 'ori_pert_images.npz', pert_images=np.array(ori_pert_images, dtype=np.float32))
 	np.savez_compressed(path + 'rob_source_images.npz', source_images=np.array(rob_source_images, dtype=np.float32))
 	np.savez_compressed(path + 'rob_pert_images.npz', pert_images=np.array(rob_pert_images, dtype=np.float32))
+
+	# Draw plot
+	draw_pdf(5, ['Original Model', 'Robust Model'], [ori_pert_amount, rob_pert_amount], file_path=path + 'result_plot.png')
