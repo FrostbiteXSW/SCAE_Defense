@@ -1,11 +1,21 @@
+import os
+
 import sonnet as snt
 import tensorflow as tf
+from tqdm import tqdm
 
+from SCAE.attack_cw import AttackerCW
 from SCAE.capsules import primary
 from SCAE.capsules.attention import SetTransformer
 from SCAE.capsules.models.scae import ImageAutoencoder, ImageCapsule
 from SCAE.tools.model import _ModelCollector, ScaeBasement
-from SCAE.tools.utilities import DatasetHelper
+from SCAE.tools.utilities import block_warnings
+from utilities import *
+
+# File paths
+snapshot = './checkpoints/{}/model.ckpt'
+dataset_path = '../SCAE/datasets/'
+gtsrb_dataset_path = '../SCAE/datasets/GTSRB-for-SCAE_Attack/GTSRB/'
 
 
 def _stacked_capsule_autoencoder(
@@ -237,12 +247,10 @@ class ScaeAdvTrain(_ModelCollector):
 				self._loss = self._model._loss(data, self._res)
 
 				res_clean = self._model({'image': self._target})
-				pri_clean = res_clean.caps_presence_prob
-				pos_clean = res_clean.posterior_mixing_probs
-				is_input_target_diff = tf.clip_by_value(tf.reduce_sum(tf.cast(
-					tf.not_equal(self._target, self._input), tf.float32)), 0, 1)
-				self._loss += is_input_target_diff * (tf.nn.l2_loss(pri_clean - self._res.caps_presence_prob) +
-				                                      tf.nn.l2_loss(pos_clean - self._res.posterior_mixing_probs))
+				pri_clean = tf.stop_gradient(res_clean.caps_presence_prob)
+				pos_clean = tf.stop_gradient(res_clean.posterior_mixing_probs)
+				self._loss += tf.nn.l2_loss(pri_clean - self._res.caps_presence_prob) + \
+				              tf.nn.l2_loss(pos_clean - self._res.posterior_mixing_probs)
 
 				if use_lr_schedule:
 					global_step = tf.train.get_or_create_global_step()
@@ -317,3 +325,128 @@ class ScaeAdvTrain(_ModelCollector):
 
 	def save_model(self, path):
 		return ScaeBasement.save_model(self, path)
+
+
+def build_from_config(
+		config,
+		batch_size,
+		is_training=False,
+		learning_rate=1e-4,
+		scope='SCAE',
+		use_lr_schedule=True,
+		snapshot=None
+):
+	return ScaeAdvTrain(
+		input_size=[batch_size, config['canvas_size'], config['canvas_size'], config['n_channels']],
+		num_classes=config['num_classes'],
+		n_part_caps=config['n_part_caps'],
+		n_obj_caps=config['n_obj_caps'],
+		colorize_templates=config['colorize_templates'],
+		use_alpha_channel=config['use_alpha_channel'],
+		prior_within_example_sparsity_weight=config['prior_within_example_sparsity_weight'],
+		prior_between_example_sparsity_weight=config['prior_between_example_sparsity_weight'],
+		posterior_within_example_sparsity_weight=config['posterior_within_example_sparsity_weight'],
+		posterior_between_example_sparsity_weight=config['posterior_between_example_sparsity_weight'],
+		template_size=config['template_size'],
+		template_nonlin=config['template_nonlin'],
+		color_nonlin=config['color_nonlin'],
+		part_encoder_noise_scale=0.,
+		obj_decoder_noise_type=None,
+		obj_decoder_noise_scale=0.,
+		set_transformer_n_layers=config['set_transformer_n_layers'],
+		set_transformer_n_heads=config['set_transformer_n_heads'],
+		set_transformer_n_dims=config['set_transformer_n_dims'],
+		set_transformer_n_output_dims=config['set_transformer_n_output_dims'],
+		part_cnn_strides=config['part_cnn_strides'],
+		prep=config['prep'],
+		is_training=is_training,
+		learning_rate=learning_rate,
+		scope=scope,
+		use_lr_schedule=use_lr_schedule,
+		snapshot=snapshot
+	)
+
+
+if __name__ == '__main__':
+	block_warnings()
+
+	config = Configs.config_mnist
+	batch_size = 100
+	max_train_steps = 50
+	learning_rate = 3e-5
+	snapshot = snapshot.format(config['dataset'])
+	num_batches_per_adv_train = 2
+
+	# Attack configuration
+	optimizer_config = AttackerCW.OptimizerConfigs.FGSM_normal
+	classifier = AttackerCW.Classifiers.PosL
+
+	path = snapshot[:snapshot.rindex('/')]
+	if not os.path.exists(path):
+		os.makedirs(path)
+
+	model = build_from_config(
+		config=config,
+		batch_size=batch_size,
+		is_training=True,
+		learning_rate=learning_rate,
+		scope='SCAE',
+		use_lr_schedule=True
+	)
+
+	attacker = AttackerCW(
+		scae=model,
+		optimizer_config=optimizer_config,
+		classifier=classifier
+	)
+
+	model.finalize()
+
+	trainset = DatasetHelper(config['dataset'], 'train', shape=[config['canvas_size']] * 2,
+	                         file_path=dataset_path, save_after_load=True,
+	                         batch_size=batch_size, shuffle=True, fill_batch=True,
+	                         normalize=True if config['dataset'] == Configs.GTSRB else False,
+	                         gtsrb_raw_file_path=gtsrb_dataset_path, gtsrb_classes=Configs.GTSRB_CLASSES)
+	testset = DatasetHelper(config['dataset'], 'test', shape=[config['canvas_size']] * 2,
+	                        file_path=dataset_path, save_after_load=True,
+	                        batch_size=batch_size, fill_batch=True,
+	                        normalize=True if config['dataset'] == Configs.GTSRB else False,
+	                        gtsrb_raw_file_path=gtsrb_dataset_path, gtsrb_classes=Configs.GTSRB_CLASSES)
+
+	model.simple_test(testset)
+
+	n_batches = 0
+	for epoch in range(max_train_steps):
+		print('\n[Epoch {}/{}]'.format(epoch + 1, max_train_steps))
+
+		for images, labels in tqdm(trainset, desc='Training'):
+			n_batches += 1
+			if n_batches != num_batches_per_adv_train:
+				model.train_step(images, labels)
+			else:
+				n_batches = 0
+				model.train_step(attacker(images, labels, nan_if_fail=False), labels, images)
+
+		test_loss = 0.
+		test_acc_prior = 0.
+		test_acc_posterior = 0.
+		for images, labels in tqdm(testset, desc='Testing'):
+			test_pred_prior, test_pred_posterior, _test_loss = model.run(
+				images=images,
+				labels=labels,
+				to_collect=[model._res.prior_cls_pred,
+				            model._res.posterior_cls_pred,
+				            model._loss]
+			)
+			test_loss += _test_loss
+			test_acc_prior += (test_pred_prior == labels).sum()
+			test_acc_posterior += (test_pred_posterior == labels).sum()
+			assert not np.isnan(test_loss)
+
+		print('loss: {:.6f}  prior acc: {:.6f}  posterior acc: {:.6f}'.format(
+			test_loss / testset.dataset_size,
+			test_acc_prior / testset.dataset_size,
+			test_acc_posterior / testset.dataset_size
+		))
+
+		model.save_model(snapshot)

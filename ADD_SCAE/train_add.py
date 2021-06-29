@@ -181,7 +181,7 @@ def build_from_config(
 if __name__ == '__main__':
 	block_warnings()
 
-	config = Configs.config_fashion_mnist
+	config = Configs.config_mnist
 	batch_size = 100
 	max_train_steps = 50
 	learning_rate = 3e-5
@@ -190,7 +190,7 @@ if __name__ == '__main__':
 	num_batches_per_adv_train = 2
 
 	# Attack configuration
-	optimizer_config = AttackerCW.OptimizerConfigs.FGSM_fast
+	optimizer_config = AttackerCW.OptimizerConfigs.FGSM_normal
 	classifier = AttackerCW.Classifiers.PosL
 
 	path = snapshot_student[:snapshot_student.rindex('/')]
