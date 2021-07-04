@@ -81,7 +81,7 @@ if __name__ == '__main__':
 	                                                batch_size=batch_size,
 	                                                alpha=alpha,
 	                                                num_iter=num_iter,
-	                                                scope='STU',
+	                                                scope='SCAE',
 	                                                snapshot=snapshot_rob,
 	                                                snapshot_kmeans=snapshot_kmeans_rob)
 	# Load dataset

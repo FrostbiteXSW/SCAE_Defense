@@ -1,19 +1,19 @@
-from SCAE.attack_bim import AttackerBIM
+from SCAE.attack_cw import AttackerCW
 from SCAE.tools.model import KMeans
 from SCAE.tools.utilities import block_warnings, ResultBuilder
 from SCAE.train import build_from_config
 from utilities import *
 
 # File paths
-result_path = './results/bim/'
+result_path = './results/cw/'
 
 
 def build_all(
 		config,
 		classifier,
 		batch_size,
-		alpha,
-		num_iter,
+		optimizer_config,
+		const_init,
 		scope,
 		snapshot,
 		snapshot_kmeans
@@ -40,12 +40,12 @@ def build_all(
 	else:
 		kmeans = None
 
-	attacker = AttackerBIM(
+	attacker = AttackerCW(
 		scae=model,
 		classifier=classifier,
 		kmeans_classifier=kmeans,
-		alpha=alpha,
-		num_iter=num_iter
+		optimizer_config=optimizer_config,
+		const_init=const_init
 	)
 
 	model.finalize()
@@ -58,19 +58,18 @@ if __name__ == '__main__':
 
 	# Attack configuration
 	config = Configs.config_mnist
+	optimizer_config = AttackerCW.OptimizerConfigs.Adam_fast
 	num_samples = 5000
 	batch_size = 100
 	classifier = Attacker.Classifiers.PosK
-	num_iter = 100
-	alpha = 0.05
 	use_mask = True
 
 	# Create original model
 	model_ori, kmeans_ori, attacker_ori = build_all(config=config,
 	                                                classifier=classifier,
 	                                                batch_size=batch_size,
-	                                                alpha=alpha,
-	                                                num_iter=num_iter,
+	                                                optimizer_config=optimizer_config,
+	                                                const_init=1e2,
 	                                                scope='SCAE',
 	                                                snapshot=snapshot_ori,
 	                                                snapshot_kmeans=snapshot_kmeans_ori)
@@ -79,9 +78,9 @@ if __name__ == '__main__':
 	model_rob, kmeans_rob, attacker_rob = build_all(config=config,
 	                                                classifier=classifier,
 	                                                batch_size=batch_size,
-	                                                alpha=alpha,
-	                                                num_iter=num_iter,
-	                                                scope='STU',
+	                                                optimizer_config=optimizer_config,
+	                                                const_init=1e2,
+	                                                scope='SCAE',
 	                                                snapshot=snapshot_rob,
 	                                                snapshot_kmeans=snapshot_kmeans_rob)
 	# Load dataset
@@ -144,8 +143,7 @@ if __name__ == '__main__':
 	result['Num of samples'] = num_samples
 
 	# Attacker params
-	result['Num of iter'] = num_iter
-	result['Alpha'] = str(alpha)
+	result['Optimizer config'] = optimizer_config
 
 	# Attack results
 	result['[ORI]Success rate'] = ori_succeed_count / num_samples
