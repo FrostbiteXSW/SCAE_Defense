@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from SCAE.tools.model import Attacker
-from SCAE.tools.utilities import DatasetHelper
+from SCAE.tools.utilities import DatasetHelper, ResultBuilder
 from SCAE.train import Configs
 
 # File paths
@@ -21,13 +21,13 @@ def attack(
 		classifier,
 		dataset,
 		num_samples,
-		succeed_pert_amount_list,
-		succeed_pert_robustness_list,
-		source_image_list,
-		pert_image_list,
-		pert_amount_list
-):
-	succeed_count = 0
+		result=None,
+		result_prefix=''
+) -> (ResultBuilder, ...):
+	succeed_pert_amount = []
+	succeed_pert_robustness = []
+	source_images = []
+	pert_images = []
 
 	dataset = iter(dataset)
 	remain = num_samples
@@ -54,21 +54,32 @@ def attack(
 					pert_amount = np.linalg.norm(attacker_outputs[i] - images[i])
 					pert_robustness = pert_amount / np.linalg.norm(images[i])
 
-					succeed_count += 1
-					succeed_pert_amount_list.append(pert_amount)
-					succeed_pert_robustness_list.append(pert_robustness)
+					succeed_pert_amount.append(pert_amount)
+					succeed_pert_robustness.append(pert_robustness)
 
-					source_image_list.append(images[i])
-					pert_image_list.append(attacker_outputs[i])
-
-					pert_amount_list.append(pert_amount)
-				else:
-					pert_amount_list.append(np.inf)
+					source_images.append(images[i])
+					pert_images.append(attacker_outputs[i])
 
 		print('Up to now: Success rate: {:.4f}. Average pert amount: {:.4f}. Remain: {}.'.format(
-			succeed_count / (num_samples - remain), np.array(succeed_pert_amount_list, dtype=np.float32).mean(), remain))
+			len(succeed_pert_amount) / (num_samples - remain), np.array(succeed_pert_amount, dtype=np.float32).mean(),
+			remain))
 
-	return succeed_count
+	# Change list into numpy array
+	all_pert_amount: list = succeed_pert_amount.copy()
+	all_pert_amount.extend([np.inf] * (num_samples - len(succeed_pert_amount)))
+	succeed_pert_amount = np.array(succeed_pert_amount, dtype=np.float32)
+	succeed_pert_robustness = np.array(succeed_pert_robustness, dtype=np.float32)
+
+	# Save the final result of complete attack
+	if result is None:
+		result = ResultBuilder()
+	result[f'{result_prefix}Success rate'] = len(succeed_pert_amount) / num_samples
+	result[f'{result_prefix}Average pert amount'] = succeed_pert_amount.mean()
+	result[f'{result_prefix}Pert amount standard deviation'] = succeed_pert_amount.std()
+	result[f'{result_prefix}Average pert robustness'] = succeed_pert_robustness.mean()
+	result[f'{result_prefix}Pert robustness standard deviation'] = succeed_pert_robustness.std()
+
+	return result, source_images, pert_images, all_pert_amount
 
 
 def load_dataset(config, batch_size):
@@ -80,7 +91,7 @@ def load_dataset(config, batch_size):
 	                     gtsrb_raw_file_path=gtsrb_dataset_path, gtsrb_classes=Configs.GTSRB_CLASSES)
 
 
-def draw_pdf(xmax, labels, data, file_path=None):
+def draw_pdf(xmax, labels, data, title=None, file_path=None):
 	for i in range(len(labels)):
 		_data = data[i]
 		label = labels[i]
@@ -95,6 +106,29 @@ def draw_pdf(xmax, labels, data, file_path=None):
 	plt.ylabel('Attack Success Rate')
 	plt.legend(loc=2)
 	plt.grid()
+	if title:
+		plt.title(title)
+
+	if file_path is not None:
+		figure = plt.gcf()
+		plt.show()
+		figure.savefig(file_path, bbox_inches='tight')
+	else:
+		plt.show()
+
+
+def draw_af(n_epoch, labels, data, title=None, file_path=None):
+	r_epoch = range(1, n_epoch + 1)
+	for i in range(len(labels)):
+		plt.plot(r_epoch, data[i], label=labels[i])
+
+	plt.xlim((0, n_epoch))
+	plt.xlabel('Epoch')
+	plt.ylim((0, 1))
+	plt.ylabel('Accuracy')
+	plt.grid()
+	if title:
+		plt.title(title)
 
 	if file_path is not None:
 		figure = plt.gcf()

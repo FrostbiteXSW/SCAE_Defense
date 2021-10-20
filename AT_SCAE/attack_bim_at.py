@@ -1,6 +1,6 @@
 from SCAE.attack_bim import AttackerBIM
 from SCAE.tools.model import KMeans
-from SCAE.tools.utilities import block_warnings, ResultBuilder
+from SCAE.tools.utilities import block_warnings
 from SCAE.train import build_from_config
 from utilities import *
 
@@ -95,50 +95,17 @@ if __name__ == '__main__':
 
 	# Start the attack on the original model
 	print('\nStart the attack on the original model...')
-	ori_succeed_pert_amount = []
-	ori_succeed_pert_robustness = []
-	ori_source_images = []
-	ori_pert_images = []
-	ori_pert_amount = []
-	ori_succeed_count = attack(model=model_ori,
-	                           kmeans=kmeans_ori,
-	                           attacker=attacker_ori,
-	                           classifier=classifier,
-	                           dataset=dataset,
-	                           num_samples=num_samples,
-	                           succeed_pert_amount_list=ori_succeed_pert_amount,
-	                           succeed_pert_robustness_list=ori_succeed_pert_robustness,
-	                           source_image_list=ori_source_images,
-	                           pert_image_list=ori_pert_images,
-	                           pert_amount_list=ori_pert_amount)
+	result, ori_source_images, ori_pert_images, ori_pert_amount = attack(
+		model=model_ori, kmeans=kmeans_ori, attacker=attacker_ori, classifier=classifier, dataset=dataset,
+		num_samples=num_samples, result_prefix='[ORI]')
 
 	# Start the attack on the robust model
 	print('\nStart the attack on the robust model...')
-	rob_succeed_pert_amount = []
-	rob_succeed_pert_robustness = []
-	rob_source_images = []
-	rob_pert_images = []
-	rob_pert_amount = []
-	rob_succeed_count = attack(model=model_rob,
-	                           kmeans=kmeans_rob,
-	                           attacker=attacker_rob,
-	                           classifier=classifier,
-	                           dataset=dataset,
-	                           num_samples=num_samples,
-	                           succeed_pert_amount_list=rob_succeed_pert_amount,
-	                           succeed_pert_robustness_list=rob_succeed_pert_robustness,
-	                           source_image_list=rob_source_images,
-	                           pert_image_list=rob_pert_images,
-	                           pert_amount_list=rob_pert_amount)
+	result, rob_source_images, rob_pert_images, rob_pert_amount = attack(
+		model=model_rob, kmeans=kmeans_rob, attacker=attacker_rob, classifier=classifier, dataset=dataset,
+		num_samples=num_samples, result=result, result_prefix='[ROB]')
 
-	# Change list into numpy array
-	ori_succeed_pert_amount = np.array(ori_succeed_pert_amount, dtype=np.float32)
-	ori_succeed_pert_robustness = np.array(ori_succeed_pert_robustness, dtype=np.float32)
-	rob_succeed_pert_amount = np.array(rob_succeed_pert_amount, dtype=np.float32)
-	rob_succeed_pert_robustness = np.array(rob_succeed_pert_robustness, dtype=np.float32)
-
-	# Save the final result of complete attack
-	result = ResultBuilder()
+	# Attack settings
 	result['Dataset'] = config['dataset']
 	result['Classifier'] = classifier
 	result['Num of samples'] = num_samples
@@ -146,19 +113,6 @@ if __name__ == '__main__':
 	# Attacker params
 	result['Num of iter'] = num_iter
 	result['Alpha'] = str(alpha)
-
-	# Attack results
-	result['[ORI]Success rate'] = ori_succeed_count / num_samples
-	result['[ORI]Average pert amount'] = ori_succeed_pert_amount.mean()
-	result['[ORI]Pert amount standard deviation'] = ori_succeed_pert_amount.std()
-	result['[ORI]Average pert robustness'] = ori_succeed_pert_robustness.mean()
-	result['[ORI]Pert robustness standard deviation'] = ori_succeed_pert_robustness.std()
-
-	result['[ROB]Success rate'] = rob_succeed_count / num_samples
-	result['[ROB]Average pert amount'] = rob_succeed_pert_amount.mean()
-	result['[ROB]Pert amount standard deviation'] = rob_succeed_pert_amount.std()
-	result['[ROB]Average pert robustness'] = rob_succeed_pert_robustness.mean()
-	result['[ROB]Pert robustness standard deviation'] = rob_succeed_pert_robustness.std()
 
 	# Print and save results
 	print(result)

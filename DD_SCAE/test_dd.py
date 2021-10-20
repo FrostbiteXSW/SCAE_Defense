@@ -11,7 +11,7 @@ snapshot_kmeans_pos = './checkpoints/{}/kmeans_pos/model.ckpt'
 if __name__ == '__main__':
 	Configs.GTSRB_DATASET_PATH = gtsrb_dataset_path
 
-	config = Configs.config_fashion_mnist
+	config = Configs.config_mnist
 	snapshot = snapshot.format(config['dataset'])
 	snapshot_kmeans_pri = snapshot_kmeans_pri.format(config['dataset'])
 	snapshot_kmeans_pos = snapshot_kmeans_pos.format(config['dataset'])
