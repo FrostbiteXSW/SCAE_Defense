@@ -1,4 +1,5 @@
 import os
+from shutil import rmtree
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -86,7 +87,7 @@ def attack(
 
 def remove_make_dirs(path):
 	if os.path.exists(path):
-		os.removedirs(path)
+		rmtree(path)
 	os.makedirs(path)
 
 
