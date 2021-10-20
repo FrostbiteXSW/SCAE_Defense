@@ -6,6 +6,7 @@ from tqdm import tqdm
 from SCAE.attack_cw import AttackerCW
 from SCAE.tools.model import _ModelCollector, ScaeBasement, _stacked_capsule_autoencoder
 from SCAE.tools.utilities import block_warnings
+from SCAE.train import build_from_config
 from utilities import *
 
 # File paths
@@ -206,46 +207,6 @@ class ScaeAdvTrain(_ModelCollector):
 		return ScaeBasement.save_model(self, path)
 
 
-def build_from_config(
-		config,
-		batch_size,
-		is_training=False,
-		learning_rate=1e-4,
-		scope='SCAE',
-		use_lr_schedule=True,
-		snapshot=None
-):
-	return ScaeAdvTrain(
-		input_size=[batch_size, config['canvas_size'], config['canvas_size'], config['n_channels']],
-		num_classes=config['num_classes'],
-		n_part_caps=config['n_part_caps'],
-		n_obj_caps=config['n_obj_caps'],
-		colorize_templates=config['colorize_templates'],
-		use_alpha_channel=config['use_alpha_channel'],
-		prior_within_example_sparsity_weight=config['prior_within_example_sparsity_weight'],
-		prior_between_example_sparsity_weight=config['prior_between_example_sparsity_weight'],
-		posterior_within_example_sparsity_weight=config['posterior_within_example_sparsity_weight'],
-		posterior_between_example_sparsity_weight=config['posterior_between_example_sparsity_weight'],
-		template_size=config['template_size'],
-		template_nonlin=config['template_nonlin'],
-		color_nonlin=config['color_nonlin'],
-		part_encoder_noise_scale=0.,
-		obj_decoder_noise_type=None,
-		obj_decoder_noise_scale=0.,
-		set_transformer_n_layers=config['set_transformer_n_layers'],
-		set_transformer_n_heads=config['set_transformer_n_heads'],
-		set_transformer_n_dims=config['set_transformer_n_dims'],
-		set_transformer_n_output_dims=config['set_transformer_n_output_dims'],
-		part_cnn_strides=config['part_cnn_strides'],
-		prep=config['prep'],
-		is_training=is_training,
-		learning_rate=learning_rate,
-		scope=scope,
-		use_lr_schedule=use_lr_schedule,
-		snapshot=snapshot
-	)
-
-
 if __name__ == '__main__':
 	block_warnings()
 
@@ -263,6 +224,11 @@ if __name__ == '__main__':
 	path = snapshot[:snapshot.rindex('/')]
 	if not os.path.exists(path):
 		os.makedirs(path)
+
+	# We are not going to use the embedded noise
+	config['part_encoder_noise_scale'] = 0.
+	config['obj_decoder_noise_type'] = None
+	config['obj_decoder_noise_scale'] = 0.
 
 	model = build_from_config(
 		config=config,

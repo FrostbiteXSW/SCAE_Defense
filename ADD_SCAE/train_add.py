@@ -27,6 +27,11 @@ if __name__ == '__main__':
 	if not os.path.exists(path):
 		os.makedirs(path)
 
+	# We are not going to use the embedded noise
+	config['part_encoder_noise_scale'] = 0.
+	config['obj_decoder_noise_type'] = None
+	config['obj_decoder_noise_scale'] = 0.
+
 	student = build_from_config(
 		config=config,
 		batch_size=batch_size,
