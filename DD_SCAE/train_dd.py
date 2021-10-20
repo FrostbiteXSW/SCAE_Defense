@@ -147,6 +147,10 @@ if __name__ == '__main__':
 	snapshot_student = snapshot_student.format(config['dataset'])
 	snapshot_teacher = snapshot_teacher.format(config['dataset'])
 
+	# Distillation configuration
+	loss_lambda = 0.5
+	temperature = 5
+
 	path = snapshot_student[:snapshot_student.rindex('/')]
 	if not os.path.exists(path):
 		os.makedirs(path)
@@ -168,7 +172,9 @@ if __name__ == '__main__':
 	teacher = ScaeDefDist(
 		scae=student,
 		scope_teacher='SCAE',
-		snapshot_teacher=snapshot_teacher
+		snapshot_teacher=snapshot_teacher,
+		loss_lambda=loss_lambda,
+		temperature=temperature
 	)
 
 	student.finalize()

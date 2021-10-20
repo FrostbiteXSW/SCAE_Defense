@@ -17,6 +17,10 @@ if __name__ == '__main__':
 	learning_rate = 3e-5
 	snapshot_student = snapshot_student.format(config['dataset'])
 	snapshot_teacher = snapshot_teacher.format(config['dataset'])
+
+	# Distillation configuration
+	loss_lambda = 0.5
+	temperature = 5
 	num_batches_per_adv_train = 2
 
 	# Attack configuration
@@ -44,7 +48,9 @@ if __name__ == '__main__':
 	teacher = ScaeDefDist(
 		scae=student,
 		scope_teacher='SCAE',
-		snapshot_teacher=snapshot_teacher
+		snapshot_teacher=snapshot_teacher,
+		loss_lambda=loss_lambda,
+		temperature=temperature
 	)
 
 	attacker = AttackerCW(
