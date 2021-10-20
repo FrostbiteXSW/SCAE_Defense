@@ -1,3 +1,5 @@
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -82,6 +84,12 @@ def attack(
 	return result, source_images, pert_images, all_pert_amount
 
 
+def remove_make_dirs(path):
+	if os.path.exists(path):
+		os.removedirs(path)
+	os.makedirs(path)
+
+
 def load_dataset(config, batch_size):
 	return DatasetHelper(config['dataset'],
 	                     'train' if config['dataset'] == Configs.GTSRB
@@ -91,7 +99,7 @@ def load_dataset(config, batch_size):
 	                     gtsrb_raw_file_path=gtsrb_dataset_path, gtsrb_classes=Configs.GTSRB_CLASSES)
 
 
-def draw_pdf(xmax, labels, data, title=None, file_path=None):
+def draw_cumulative_distribution(xmax, labels, data, title=None, file_path=None):
 	for i in range(len(labels)):
 		_data = data[i]
 		label = labels[i]
@@ -117,7 +125,7 @@ def draw_pdf(xmax, labels, data, title=None, file_path=None):
 		plt.show()
 
 
-def draw_af(n_epoch, labels, data, title=None, file_path=None):
+def draw_accuracy_variation(n_epoch, labels, data, title=None, file_path=None):
 	r_epoch = range(1, n_epoch + 1)
 	for i in range(len(labels)):
 		plt.plot(r_epoch, data[i], label=labels[i])

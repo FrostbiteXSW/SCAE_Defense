@@ -123,4 +123,5 @@ if __name__ == '__main__':
 	np.savez_compressed(path + 'rob_pert_images.npz', pert_images=np.array(rob_pert_images, dtype=np.float32))
 
 	# Draw plot
-	draw_pdf(5, ['Original Model', 'Robust Model'], [ori_pert_amount, rob_pert_amount], file_path=path + 'result_plot.png')
+	draw_cumulative_distribution(5, ['Original Model', 'Robust Model'], [ori_pert_amount, rob_pert_amount],
+	                             title='Pert Amount Cumulative Distribution', file_path=path + 'result_plot.png')

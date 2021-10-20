@@ -1,5 +1,3 @@
-import os
-
 import tensorflow as tf
 from tqdm import tqdm
 
@@ -151,10 +149,6 @@ if __name__ == '__main__':
 	loss_lambda = 0.5
 	temperature = 5
 
-	path = snapshot_student[:snapshot_student.rindex('/')]
-	if not os.path.exists(path):
-		os.makedirs(path)
-
 	# We are not going to use the embedded noise
 	config['part_encoder_noise_scale'] = 0.
 	config['obj_decoder_noise_type'] = None
@@ -192,9 +186,12 @@ if __name__ == '__main__':
 
 	teacher.simple_test(testset)
 
+	# Make snapshot directory
+	path = snapshot_student[:snapshot_student.rindex('/')]
+	remove_make_dirs(path)
+
 	test_acc_prior_list = []
 	test_acc_posterior_list = []
-
 	for epoch in range(max_train_steps):
 		print('\n[Epoch {}/{}]'.format(epoch + 1, max_train_steps))
 
@@ -217,16 +214,16 @@ if __name__ == '__main__':
 			test_acc_posterior += (test_pred_posterior == labels).sum()
 			assert not np.isnan(test_loss)
 
-		print('loss: {:.6f}  prior acc: {:.6f}  posterior acc: {:.6f}'.format(
-			test_loss / testset.dataset_size,
-			test_acc_prior / testset.dataset_size,
-			test_acc_posterior / testset.dataset_size
-		))
-
+		test_acc_prior /= testset.dataset_size
+		test_acc_posterior /= testset.dataset_size
 		test_acc_prior_list.append(test_acc_prior / testset.dataset_size)
 		test_acc_posterior_list.append(test_acc_posterior / testset.dataset_size)
 
+		print('loss: {:.6f}  prior acc: {:.6f}  posterior acc: {:.6f}'.format(
+			test_loss / testset.dataset_size, test_acc_prior, test_acc_posterior))
+
 		student.save_model(snapshot_student)
 
-	draw_af(max_train_steps, ['Prior Acc', 'Posterior Acc'], [test_acc_prior_list, test_acc_posterior_list],
-	        title='Test Accuracy Variation')
+	draw_accuracy_variation(max_train_steps, ['Prior Acc', 'Posterior Acc'],
+	                        [test_acc_prior_list, test_acc_posterior_list],
+	                        title='Test Accuracy Variation', file_path=path + 'accuracy_variation_plot.png')
