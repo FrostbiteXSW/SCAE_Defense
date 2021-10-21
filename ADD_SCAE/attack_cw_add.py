@@ -115,10 +115,14 @@ if __name__ == '__main__':
 	# Print and save results
 	print(result)
 	path = result.save(result_path)
-	np.savez_compressed(path + 'ori_source_images.npz', source_images=np.array(ori_source_images, dtype=np.float32))
-	np.savez_compressed(path + 'ori_pert_images.npz', pert_images=np.array(ori_pert_images, dtype=np.float32))
-	np.savez_compressed(path + 'rob_source_images.npz', source_images=np.array(rob_source_images, dtype=np.float32))
-	np.savez_compressed(path + 'rob_pert_images.npz', pert_images=np.array(rob_pert_images, dtype=np.float32))
+	np.savez_compressed(os.path.join(path, 'ori_source_images.npz'),
+	                    source_images=np.array(ori_source_images, dtype=np.float32))
+	np.savez_compressed(os.path.join(path, 'ori_pert_images.npz'),
+	                    source_images=np.array(ori_pert_images, dtype=np.float32))
+	np.savez_compressed(os.path.join(path, 'rob_source_images.npz'),
+	                    source_images=np.array(rob_source_images, dtype=np.float32))
+	np.savez_compressed(os.path.join(path, 'rob_pert_images.npz'),
+	                    source_images=np.array(rob_pert_images, dtype=np.float32))
 
 	# Draw plot
 	draw_cumulative_distribution(5, ['Original Model', 'Robust Model'], [ori_pert_amount, rob_pert_amount],

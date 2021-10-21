@@ -1,5 +1,3 @@
-import os
-
 from SCAE.test import test
 from utilities import *
 
