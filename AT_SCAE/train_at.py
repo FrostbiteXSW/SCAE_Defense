@@ -290,8 +290,8 @@ if __name__ == '__main__':
 
 		test_acc_prior /= testset.dataset_size
 		test_acc_posterior /= testset.dataset_size
-		test_acc_prior_list.append(test_acc_prior / testset.dataset_size)
-		test_acc_posterior_list.append(test_acc_posterior / testset.dataset_size)
+		test_acc_prior_list.append(test_acc_prior)
+		test_acc_posterior_list.append(test_acc_posterior)
 
 		print('loss: {:.6f}  prior acc: {:.6f}  posterior acc: {:.6f}'.format(
 			test_loss / testset.dataset_size, test_acc_prior, test_acc_posterior))
@@ -300,4 +300,4 @@ if __name__ == '__main__':
 
 	draw_accuracy_variation(max_train_steps, ['Prior Acc', 'Posterior Acc'],
 	                        [test_acc_prior_list, test_acc_posterior_list],
-	                        title='Test Accuracy Variation', file_path=path + 'accuracy_variation_plot.png')
+	                        title='Test Accuracy Variation', file_path=os.path.join(path, 'accuracy_variation_plot.png'))

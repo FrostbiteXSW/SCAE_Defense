@@ -122,4 +122,6 @@ if __name__ == '__main__':
 
 	# Draw plot
 	draw_cumulative_distribution(5, ['Original Model', 'Robust Model'], [ori_pert_amount, rob_pert_amount],
-	                             title='Pert Amount Cumulative Distribution', file_path=path + 'result_plot.png')
+	                             title='Pert Amount Cumulative Distribution',
+	                             file_path=os.path.join(path, 'result_plot.png'))
+
