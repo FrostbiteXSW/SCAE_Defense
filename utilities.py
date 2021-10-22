@@ -135,6 +135,7 @@ def draw_accuracy_variation(n_epoch, labels, data, title=None, file_path=None):
 	plt.xlabel('Epoch')
 	plt.ylim((0, 1))
 	plt.ylabel('Accuracy')
+	plt.legend(loc=2)
 	plt.grid()
 	if title:
 		plt.title(title)
