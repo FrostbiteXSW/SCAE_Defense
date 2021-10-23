@@ -127,9 +127,9 @@ def draw_cumulative_distribution(xmax, labels, data, title=None, file_path=None)
 
 
 def draw_accuracy_variation(n_epoch, labels, data, title=None, file_path=None):
-	r_epoch = range(1, n_epoch + 1)
+	r_epoch = range(0, n_epoch + 1)
 	for i in range(len(labels)):
-		plt.plot(r_epoch, data[i], label=labels[i])
+		plt.plot(r_epoch, [0, *data[i]], label=labels[i])
 
 	plt.xlim((0, n_epoch))
 	plt.xlabel('Epoch')
