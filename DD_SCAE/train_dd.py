@@ -77,10 +77,10 @@ class ScaeDefDist(_ModelCollector):
 				global_step.initializer.run(session=self._sess)
 
 			loss_pri = tf.nn.l2_loss(
-				tf.nn.softmax(self._res_stu.caps_presence_prob)
+				tf.nn.softmax(self._res_stu.caps_presence_prob / temperature)
 				- tf.nn.softmax(self._res_tch.caps_presence_prob / temperature))
 			loss_pos = tf.nn.l2_loss(
-				tf.nn.softmax(self._res_stu.posterior_mixing_probs)
+				tf.nn.softmax(self._res_stu.posterior_mixing_probs/ temperature)
 				- tf.nn.softmax(self._res_tch.posterior_mixing_probs / temperature))
 
 			self._loss = (1 - loss_lambda) * scae._loss + loss_lambda * (temperature ** 2) * (loss_pri + loss_pos)
@@ -147,7 +147,7 @@ if __name__ == '__main__':
 
 	# Distillation configuration
 	loss_lambda = 0.5
-	temperature = 5
+	temperature = 1
 
 	# We are not going to use the embedded noise
 	config['part_encoder_noise_scale'] = 0.
