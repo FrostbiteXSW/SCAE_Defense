@@ -249,7 +249,7 @@ if __name__ == '__main__':
 
 	config = Configs.config_mnist
 	batch_size = 100
-	max_train_steps = 50
+	max_train_steps = 100
 	learning_rate = 3e-5
 	snapshot = snapshot.format(config['dataset'])
 	num_batches_per_adv_train = 2

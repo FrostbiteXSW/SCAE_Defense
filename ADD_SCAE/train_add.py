@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
 	# Distillation configuration
 	loss_lambda = 0.5
-	temperature = 5
+	temperature = 1
 	num_batches_per_adv_train = 2
 
 	# Attack configuration
