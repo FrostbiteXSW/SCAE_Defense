@@ -15,6 +15,7 @@ snapshot_rob = './checkpoints/{}/model.ckpt'
 snapshot_kmeans_rob = './checkpoints/{}/kmeans_{}/model.ckpt'
 dataset_path = '../SCAE/datasets/'
 gtsrb_dataset_path = '../SCAE/datasets/GTSRB-for-SCAE_Attack/GTSRB/'
+ori_pert_amount_file_path = '../ORI_SCAE/results/{}/{}/ori_pert_amount.npz'
 
 
 def attack(
@@ -50,18 +51,24 @@ def attack(
 		attacker_outputs = attacker(images, labels, nan_if_fail=True, verbose=True)
 
 		for i in range(len(attacker_outputs)):
-			if right_classification[i] and remain:
+			if remain > 0:
 				remain -= 1
-				if True not in np.isnan(attacker_outputs[i]):
+				if not right_classification[i]:
+					succeed_pert_amount.append(0)
+					succeed_pert_robustness.append(0)
+					source_images.append(images[i])
+					pert_images.append(images[i])
+				elif True not in np.isnan(attacker_outputs[i]):
 					# L2 distance between pert_image and source_image
 					pert_amount = np.linalg.norm(attacker_outputs[i] - images[i])
 					pert_robustness = pert_amount / np.linalg.norm(images[i])
 
 					succeed_pert_amount.append(pert_amount)
 					succeed_pert_robustness.append(pert_robustness)
-
 					source_images.append(images[i])
 					pert_images.append(attacker_outputs[i])
+			else:
+				break
 
 		print('Up to now: Success rate: {:.4f}. Average pert amount: {:.4f}. Remain: {}.'.format(
 			len(succeed_pert_amount) / (num_samples - remain), np.array(succeed_pert_amount, dtype=np.float32).mean(),
