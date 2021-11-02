@@ -123,12 +123,6 @@ class ScaeAdvTrain(_ModelCollector):
 
 				self._loss = self._model._loss(data, self._res)
 
-				res_clean = self._model({'image': self._target})
-				pri_clean = tf.stop_gradient(res_clean.caps_presence_prob)
-				pos_clean = tf.stop_gradient(res_clean.posterior_mixing_probs)
-				self._loss += tf.nn.l2_loss(pri_clean - self._res.caps_presence_prob) + \
-				              tf.nn.l2_loss(pos_clean - self._res.posterior_mixing_probs)
-
 				if use_lr_schedule:
 					global_step = tf.train.get_or_create_global_step()
 					learning_rate = tf.train.exponential_decay(
