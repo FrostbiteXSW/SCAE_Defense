@@ -15,7 +15,7 @@ snapshot_rob = './checkpoints/{}/model.ckpt'
 snapshot_kmeans_rob = './checkpoints/{}/kmeans_{}/model.ckpt'
 dataset_path = '../SCAE/datasets/'
 gtsrb_dataset_path = '../SCAE/datasets/GTSRB-for-SCAE_Attack/GTSRB/'
-ori_pert_amount_file_path = '../ORI_SCAE/results/{}/{}/ori_pert_amount.npz'
+ori_pert_amount_file_path = '../ORI_SCAE/results/{}/{}/{}/ori_pert_amount.npz'
 
 
 def attack(

@@ -21,7 +21,7 @@ if __name__ == '__main__':
 	                                                batch_size=batch_size,
 	                                                optimizer_config=optimizer_config,
 	                                                const_init=1e2,
-	                                                scope='SCAE',
+	                                                scope='STU',
 	                                                snapshot=snapshot_rob,
 	                                                snapshot_kmeans=snapshot_kmeans_rob)
 	# Load dataset
@@ -56,7 +56,7 @@ if __name__ == '__main__':
 	# Draw plot
 	labels = ['Robust Model']
 	data = [rob_pert_amount]
-	format_path = ori_pert_amount_file_path.format('cw', config['dataset'])
+	format_path = ori_pert_amount_file_path.format('cw', config['dataset'], classifier)
 	if os.path.exists(format_path):
 		ori_pert_amount = load_npz(format_path)['pert_amount']
 		labels.insert(0, 'Original Model')

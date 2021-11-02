@@ -98,7 +98,7 @@ if __name__ == '__main__':
 
 	# Print and save results (without datetime)
 	print(result)
-	path = result.save(os.path.join(result_path, f'{config["dataset"]}/'), plus_time=False)
+	path = result.save(os.path.join(result_path, f'{config["dataset"]}/{classifier}/'), plus_time=False)
 	np.savez_compressed(os.path.join(path, 'ori_source_images.npz'),
 	                    source_images=np.array(ori_source_images, dtype=np.float32))
 	np.savez_compressed(os.path.join(path, 'ori_pert_images.npz'),
