@@ -241,11 +241,11 @@ def build_adv_train_from_config(
 if __name__ == '__main__':
 	block_warnings()
 
-	config = Configs.config_mnist
+	config = Configs.config_gtsrb
 	batch_size = 100
 	max_train_steps = 100
 	learning_rate = 3e-5
-	snapshot = snapshot.format(config['dataset'])
+	snapshot = snapshot.format(config['name'])
 	num_batches_per_adv_train = 2
 
 	# Attack configuration

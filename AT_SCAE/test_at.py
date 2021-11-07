@@ -9,10 +9,10 @@ snapshot_kmeans_pos = './checkpoints/{}/kmeans_pos/model.ckpt'
 if __name__ == '__main__':
 	Configs.GTSRB_DATASET_PATH = gtsrb_dataset_path
 
-	config = Configs.config_mnist
-	snapshot = snapshot.format(config['dataset'])
-	snapshot_kmeans_pri = snapshot_kmeans_pri.format(config['dataset'])
-	snapshot_kmeans_pos = snapshot_kmeans_pos.format(config['dataset'])
+	config = Configs.config_gtsrb
+	snapshot = snapshot.format(config['name'])
+	snapshot_kmeans_pri = snapshot_kmeans_pri.format(config['name'])
+	snapshot_kmeans_pos = snapshot_kmeans_pos.format(config['name'])
 	train_and_save_kmeans = not (os.path.exists(snapshot_kmeans_pri[:snapshot_kmeans_pri.rindex('/')])
 	                             and os.path.exists(snapshot_kmeans_pos[:snapshot_kmeans_pos.rindex('/')]))
 

@@ -136,8 +136,8 @@ if __name__ == '__main__':
 	batch_size = 100
 	max_train_steps = 100
 	learning_rate = 3e-5
-	snapshot_student = snapshot_student.format(config['dataset'])
-	snapshot_teacher = snapshot_teacher.format(config['dataset'])
+	snapshot_student = snapshot_student.format(config['name'])
+	snapshot_teacher = snapshot_teacher.format(config['name'])
 
 	# Distillation configuration
 	loss_lambda = 0.5

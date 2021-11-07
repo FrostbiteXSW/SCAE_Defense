@@ -19,8 +19,8 @@ def build_all(
 		snapshot,
 		snapshot_kmeans
 ):
-	snapshot = snapshot.format(config['dataset'])
-	snapshot_kmeans = snapshot_kmeans.format(config['dataset'], classifier[:3].lower())
+	snapshot = snapshot.format(config['name'])
+	snapshot_kmeans = snapshot_kmeans.format(config['name'], classifier[:3].lower())
 
 	model = build_from_config(
 		config=config,
@@ -62,7 +62,7 @@ if __name__ == '__main__':
 	optimizer_config = AttackerCW.OptimizerConfigs.Adam_fast
 	num_samples = 1000
 	batch_size = 100
-	classifier = Attacker.Classifiers.PosK
+	classifier = Attacker.Classifiers.PriK
 	use_mask = True
 
 	# Create original model
@@ -89,7 +89,7 @@ if __name__ == '__main__':
 		num_samples=num_samples, result_prefix='[ORI]')
 
 	# Attack settings
-	result['Dataset'] = config['dataset']
+	result['Dataset'] = config['name']
 	result['Classifier'] = classifier
 	result['Num of samples'] = num_samples
 
@@ -98,7 +98,7 @@ if __name__ == '__main__':
 
 	# Print and save results (without datetime)
 	print(result)
-	path = result.save(os.path.join(result_path, f'{config["dataset"]}/{classifier}/'), plus_time=False)
+	path = result.save(os.path.join(result_path, f'{config["name"]}/{classifier}/'), plus_time=False)
 	np.savez_compressed(os.path.join(path, 'ori_source_images.npz'),
 	                    source_images=np.array(ori_source_images, dtype=np.float32))
 	np.savez_compressed(os.path.join(path, 'ori_pert_images.npz'),

@@ -38,7 +38,7 @@ if __name__ == '__main__':
 		num_samples=num_samples, result_prefix='[ROB]')
 
 	# Attack settings
-	result['Dataset'] = config['dataset']
+	result['Dataset'] = config['name']
 	result['Classifier'] = classifier
 	result['Num of samples'] = num_samples
 
@@ -56,7 +56,7 @@ if __name__ == '__main__':
 	# Draw plot
 	labels = ['Robust Model']
 	data = [rob_pert_amount]
-	format_path = ori_pert_amount_file_path.format('cw', config['dataset'], classifier)
+	format_path = ori_pert_amount_file_path.format('cw', config['name'], classifier)
 	if os.path.exists(format_path):
 		ori_pert_amount = load_npz(format_path)['pert_amount']
 		labels.insert(0, 'Original Model')
