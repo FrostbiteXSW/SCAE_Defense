@@ -52,6 +52,8 @@ if __name__ == '__main__':
 	                    source_images=np.array(rob_source_images, dtype=np.float32))
 	np.savez_compressed(os.path.join(path, 'rob_pert_images.npz'),
 	                    pert_images=np.array(rob_pert_images, dtype=np.float32))
+	np.savez_compressed(os.path.join(path, 'rob_pert_amount.npz'),
+	                    pert_amount=np.array(rob_pert_amount, dtype=np.float32))
 
 	# Draw plot
 	labels = ['Robust Model']

@@ -66,15 +66,16 @@ class ScaeDefDist(_ModelCollector):
 			self._is_training = False
 
 			learning_rate = scae._learning_rate
+			global_step = tf.train.get_or_create_global_step()
+			global_step.initializer.run(session=self._sess)
+
 			if scae._use_lr_schedule:
-				global_step = tf.train.get_or_create_global_step()
 				learning_rate = tf.train.exponential_decay(
 					global_step=global_step,
 					learning_rate=learning_rate,
 					decay_steps=1e4,
 					decay_rate=.96
 				)
-				global_step.initializer.run(session=self._sess)
 
 			# loss_pri = tf.nn.l2_loss(
 			# 	tf.nn.softmax(self._res_stu.caps_presence_prob / temperature)
@@ -86,12 +87,14 @@ class ScaeDefDist(_ModelCollector):
 			loss_pri = tf.nn.l2_loss(self._res_stu.caps_presence_prob - self._res_tch.caps_presence_prob)
 			loss_pos = tf.nn.l2_loss(self._res_stu.posterior_mixing_probs - self._res_tch.posterior_mixing_probs)
 
-			self._loss = (1 - loss_lambda) * scae._loss + loss_lambda * (temperature ** 2) * (loss_pri + loss_pos)
+			# self._loss = (1 - loss_lambda) * scae._loss + loss_lambda * (temperature ** 2) * (loss_pri + loss_pos)
+			self._loss = (1 - loss_lambda) * scae._loss + loss_lambda * (loss_pri + loss_pos)
 
 			eps = 1e-2 / float(scae._input_size[0]) ** 2
 			optimizer = tf.train.RMSPropOptimizer(learning_rate, momentum=.9, epsilon=eps)
 
-			self._train_step = optimizer.minimize(self._loss, var_list=tf.trainable_variables(scope=scae._scope))
+			self._train_step = optimizer.minimize(self._loss, global_step=global_step,
+			                                      var_list=tf.trainable_variables(scope=scae._scope))
 			self._sess.run(tf.initialize_variables(var_list=optimizer.variables()))
 
 			saver = tf.train.Saver(var_list=tf.trainable_variables(scope=scope_teacher))
