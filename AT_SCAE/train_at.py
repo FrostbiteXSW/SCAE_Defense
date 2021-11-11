@@ -255,6 +255,7 @@ if __name__ == '__main__':
 	classifier = AttackerCW.Classifiers.PosL
 
 	# We are not going to use the embedded noise
+	# Below is done in build_adv_train_from_config()
 	# config['part_encoder_noise_scale'] = 0.
 	# config['obj_decoder_noise_type'] = None
 	# config['obj_decoder_noise_scale'] = 0.

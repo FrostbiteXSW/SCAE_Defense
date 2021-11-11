@@ -16,8 +16,7 @@ class ScaeAdvDist(_ModelCollector):
 			scae: ScaeBasement,
 			scope_teacher='SCAE',
 			snapshot_teacher=None,
-			loss_lambda=0.5,
-			temperature=5
+			loss_lambda=0.5
 	):
 		self._sess = scae._sess
 		self._valid_shape = scae._valid_shape
@@ -63,31 +62,37 @@ class ScaeAdvDist(_ModelCollector):
 			self._res = self._res_tch
 			self._is_training = False
 
-			learning_rate = scae._learning_rate
-			if scae._use_lr_schedule:
-				global_step = tf.train.get_or_create_global_step()
-				learning_rate = tf.train.exponential_decay(
-					global_step=global_step,
-					learning_rate=learning_rate,
-					decay_steps=1e4,
-					decay_rate=.96
-				)
-				global_step.initializer.run(session=self._sess)
+			self._learning_rate = scae._learning_rate
+			self._global_step = tf.Variable(initial_value=0, trainable=False)
+			self._global_step.initializer.run(session=self._sess)
 
-			loss_pri = tf.nn.l2_loss(self._res_stu.caps_presence_prob - self._res_tch.caps_presence_prob)
-			loss_pos = tf.nn.l2_loss(self._res_stu.posterior_mixing_probs - self._res_tch.posterior_mixing_probs)
+			loss_pri = tf.nn.l2_loss(self._res_stu.caps_presence_prob
+			                         - tf.stop_gradient(self._res_tch.caps_presence_prob))
+			loss_pos = tf.nn.l2_loss(self._res_stu.posterior_mixing_probs
+			                         - tf.stop_gradient(self._res_tch.posterior_mixing_probs))
 
-			self._loss = (1 - loss_lambda) * scae._loss + loss_lambda * (temperature ** 2) * (loss_pri + loss_pos)
+			self._loss = (1 - loss_lambda) * scae._loss + loss_lambda * (loss_pri + loss_pos)
 
 			eps = 1e-2 / float(scae._input_size[0]) ** 2
-			optimizer = tf.train.RMSPropOptimizer(learning_rate, momentum=.9, epsilon=eps)
+			optimizer = tf.train.RMSPropOptimizer(self._learning_rate, momentum=.9, epsilon=eps)
 
-			self._train_step = optimizer.minimize(self._loss, var_list=tf.trainable_variables(scope=scae._scope))
+			self._train_step = optimizer.minimize(self._loss, global_step=self._global_step,
+			                                      var_list=tf.trainable_variables(scope=scae._scope))
 			self._sess.run(tf.initialize_variables(var_list=optimizer.variables()))
 
 			saver = tf.train.Saver(var_list=tf.trainable_variables(scope=scope_teacher))
 			print('Restoring teacher from snapshot: {}'.format(snapshot_teacher))
 			saver.restore(self._sess, snapshot_teacher)
+
+	@property
+	def global_step(self) -> int:
+		return self._sess.run(self._global_step)
+
+	@property
+	def learning_rate(self) -> float:
+		if isinstance(learning_rate, (int, float)):
+			return learning_rate
+		return self._sess.run(self._learning_rate)
 
 	def run(self, images, to_collect, labels=None, images_student=None):
 		try:
@@ -136,12 +141,11 @@ if __name__ == '__main__':
 	batch_size = 100
 	max_train_steps = 100
 	learning_rate = 3e-5
-	snapshot_student = snapshot_student.format(config['name'])
 	snapshot_teacher = snapshot_teacher.format(config['name'])
+	snapshot_student = snapshot_student.format(config['name'])
 
 	# Distillation configuration
 	loss_lambda = 0.5
-	temperature = 1
 	num_batches_per_adv_train = 2
 
 	# Attack configuration
@@ -166,8 +170,7 @@ if __name__ == '__main__':
 		scae=student,
 		scope_teacher='SCAE',
 		snapshot_teacher=snapshot_teacher,
-		loss_lambda=loss_lambda,
-		temperature=temperature
+		loss_lambda=loss_lambda
 	)
 
 	attacker = AttackerCW(
@@ -201,13 +204,16 @@ if __name__ == '__main__':
 	for epoch in range(max_train_steps):
 		print('\n[Epoch {}/{}]'.format(epoch + 1, max_train_steps))
 
-		for images, labels in tqdm(trainset, desc='Training'):
+		tqdm_trainset = tqdm(trainset, desc='Training')
+		for images, labels in tqdm_trainset:
 			n_batches += 1
 			if n_batches != num_batches_per_adv_train:
 				teacher.train_step(images, images, labels)
 			else:
 				n_batches = 0
 				teacher.train_step(images, attacker(images, labels, nan_if_fail=False), labels)
+			tqdm_trainset.set_postfix_str(f'GS={teacher.global_step}, LR={teacher.learning_rate:.1e}')
+		tqdm_trainset.close()
 
 		test_loss = 0.
 		test_acc_prior = 0.
