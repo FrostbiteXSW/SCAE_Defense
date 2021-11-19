@@ -123,13 +123,13 @@ class ScaeAdvTrain(_ModelCollector):
 
 				self._loss = self._model._loss(data, self._res)
 
-				global_step = tf.train.get_or_create_global_step()
-				global_step.initializer.run(session=self._sess)
+				self._global_step = tf.train.get_or_create_global_step()
+				self._global_step.initializer.run(session=self._sess)
 
 				if use_lr_schedule:
-					learning_rate = tf.train.exponential_decay(
-						global_step=global_step,
-						learning_rate=learning_rate,
+					self._learning_rate = tf.train.exponential_decay(
+						global_step=self._global_step,
+						learning_rate=self._learning_rate,
 						decay_steps=1e4,
 						decay_rate=.96
 					)
@@ -137,7 +137,7 @@ class ScaeAdvTrain(_ModelCollector):
 				eps = 1e-2 / float(input_size[0]) ** 2
 				optimizer = tf.train.RMSPropOptimizer(learning_rate, momentum=.9, epsilon=eps)
 
-				self._train_step = optimizer.minimize(self._loss, global_step=global_step,
+				self._train_step = optimizer.minimize(self._loss, global_step=self._global_step,
 				                                      var_list=tf.trainable_variables(scope=scope))
 				self._sess.run(tf.initialize_variables(var_list=optimizer.variables()))
 			else:
@@ -151,6 +151,16 @@ class ScaeAdvTrain(_ModelCollector):
 				self._saver.restore(self._sess, snapshot)
 			else:
 				self._sess.run(tf.initialize_variables(var_list=tf.trainable_variables(scope=scope)))
+
+	@property
+	def global_step(self) -> int:
+		return self._sess.run(self._global_step)
+
+	@property
+	def learning_rate(self) -> float:
+		if isinstance(self._learning_rate, (int, float)):
+			return self._learning_rate
+		return self._sess.run(self._learning_rate)
 
 	def run(self, images, to_collect, labels=None, targets=None):
 		try:
@@ -300,13 +310,16 @@ if __name__ == '__main__':
 	for epoch in range(max_train_steps):
 		print('\n[Epoch {}/{}]'.format(epoch + 1, max_train_steps))
 
-		for images, labels in tqdm(trainset, desc='Training'):
+		tqdm_trainset = tqdm(trainset, desc='Training')
+		for images, labels in tqdm_trainset:
 			n_batches += 1
 			if n_batches != num_batches_per_adv_train:
 				model.train_step(images, labels)
 			else:
 				n_batches = 0
 				model.train_step(attacker(images, labels, nan_if_fail=False), labels, images)
+			tqdm_trainset.set_postfix_str(f'GS={model.global_step}, LR={model.learning_rate:.1e}')
+		tqdm_trainset.close()
 
 		test_loss = 0.
 		test_acc_prior = 0.
