@@ -16,7 +16,8 @@ class ScaeAdvDist(_ModelCollector):
 			scae: ScaeBasement,
 			scope_teacher='SCAE',
 			snapshot_teacher=None,
-			loss_lambda=0.5
+			loss_lambda=0.5,
+			n_steps_before_ll_to_zero=np.inf
 	):
 		self._sess = scae._sess
 		self._valid_shape = scae._valid_shape
@@ -64,12 +65,14 @@ class ScaeAdvDist(_ModelCollector):
 
 			self._learning_rate = scae._learning_rate
 			self._global_step = scae._global_step
+			self._loss_lambda = tf.multiply(tf.to_float(loss_lambda),
+			                                tf.to_float(tf.to_float(self._global_step) < tf.to_float(n_steps_before_ll_to_zero)))
 
 			loss_pri = tf.nn.l2_loss(self._res_stu.caps_presence_prob
 			                         - tf.stop_gradient(self._res_tch.caps_presence_prob))
 			loss_pos = tf.nn.l2_loss(self._res_stu.posterior_mixing_probs
 			                         - tf.stop_gradient(self._res_tch.posterior_mixing_probs))
-			self._loss = (1 - loss_lambda) * scae._loss + loss_lambda * (loss_pri + loss_pos)
+			self._loss = (1. - self._loss_lambda) * scae._loss + self._loss_lambda * (loss_pri + loss_pos)
 			self._train_step = scae._optimizer.minimize(self._loss, global_step=self._global_step,
 			                                            var_list=tf.trainable_variables(scope=scae._scope))
 
@@ -87,6 +90,10 @@ class ScaeAdvDist(_ModelCollector):
 			return self._learning_rate
 		return self._sess.run(self._learning_rate)
 
+	@property
+	def loss_lambda(self) -> float:
+		return self._sess.run(self._loss_lambda)
+
 	def run(self, images, to_collect, labels=None, images_student=None):
 		try:
 			if images_student is not None:
@@ -94,23 +101,21 @@ class ScaeAdvDist(_ModelCollector):
 				images_student, _ = self._valid_shape(images_student)
 
 			if labels is not None:
-				images, num_images, labels = self._valid_shape(images, labels)
 				return self._sess.run(to_collect, feed_dict={
 					self._input_tch: images,
 					self._input_stu: images_student if images_student is not None else images,
 					self._label: labels
-				})[:num_images]
+				})
 
-			images, num_images = self._valid_shape(images)
 			return self._sess.run(to_collect, feed_dict={
 				self._input_tch: images,
 				self._input_stu: images_student if images_student is not None else images,
-			})[:num_images]
+			})
 
 		except tf.errors.InvalidArgumentError:
 			pass
 
-		raise NotImplementedError('Request outputs need labels to be provided.')
+		raise Exception('Request outputs need labels to be provided.')
 
 	def train_step(self, images_teacher, images_student, labels):
 		return self._sess.run(self._train_step, feed_dict={
@@ -132,14 +137,17 @@ if __name__ == '__main__':
 
 	config = Configs.config_mnist
 	batch_size = 100
-	max_train_steps = 50
+	max_train_steps = 100
 	learning_rate = 3e-5
-	snapshot_teacher = snapshot_teacher.format(config['name'])
-	snapshot_student = snapshot_student.format(config['name'])
 
 	# Distillation configuration
 	loss_lambda = 0.5
+	n_steps_before_ll_to_zero = 30000
 	num_batches_per_adv_train = 2
+
+	# Snapshot path configuration
+	snapshot_teacher = snapshot_teacher.format(config['name'])
+	snapshot_student = snapshot_student.format(config['name'])
 
 	# Attack configuration
 	optimizer_config = AttackerCW.OptimizerConfigs.FGSM_normal
@@ -163,7 +171,8 @@ if __name__ == '__main__':
 		scae=student,
 		scope_teacher='SCAE',
 		snapshot_teacher=snapshot_teacher,
-		loss_lambda=loss_lambda
+		loss_lambda=loss_lambda,
+		n_steps_before_ll_to_zero=n_steps_before_ll_to_zero
 	)
 
 	attacker = AttackerCW(
@@ -186,6 +195,7 @@ if __name__ == '__main__':
 	                        gtsrb_raw_file_path=gtsrb_dataset_path, gtsrb_classes=Configs.GTSRB_CLASSES)
 
 	teacher.simple_test(testset)
+	student.simple_test(testset)
 
 	# Make snapshot directory
 	path = snapshot_student[:snapshot_student.rindex('/')]
@@ -197,7 +207,7 @@ if __name__ == '__main__':
 	for epoch in range(max_train_steps):
 		print('\n[Epoch {}/{}]'.format(epoch + 1, max_train_steps))
 
-		tqdm_trainset = tqdm(trainset, desc='Training')
+		tqdm_trainset = tqdm(trainset, desc='Training', ncols=100)
 		for images, labels in tqdm_trainset:
 			n_batches += 1
 			if n_batches != num_batches_per_adv_train:
@@ -205,7 +215,8 @@ if __name__ == '__main__':
 			else:
 				n_batches = 0
 				teacher.train_step(images, attacker(images, labels, nan_if_fail=False), labels)
-			tqdm_trainset.set_postfix_str(f'GS={teacher.global_step}, LR={teacher.learning_rate:.1e}')
+			tqdm_trainset.set_postfix_str(f'GS={teacher.global_step}, LR={teacher.learning_rate:.1e}, '
+			                              f'LL={teacher.loss_lambda:.2f}')
 		tqdm_trainset.close()
 
 		test_loss = 0.
