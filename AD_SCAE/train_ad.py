@@ -83,8 +83,8 @@ class ScaeAdvDist(_ModelCollector):
 
 	@property
 	def learning_rate(self) -> float:
-		if isinstance(learning_rate, (int, float)):
-			return learning_rate
+		if isinstance(self._learning_rate, (int, float)):
+			return self._learning_rate
 		return self._sess.run(self._learning_rate)
 
 	def run(self, images, to_collect, labels=None, images_student=None):
