@@ -95,6 +95,7 @@ def attack(
 def remove_make_dirs(path):
 	if os.path.exists(path):
 		rmtree(path)
+		print(f'INFO: Path {path} has been removed.')
 	os.makedirs(path)
 
 

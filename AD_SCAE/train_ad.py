@@ -63,22 +63,15 @@ class ScaeAdvDist(_ModelCollector):
 			self._is_training = False
 
 			self._learning_rate = scae._learning_rate
-			self._global_step = tf.Variable(initial_value=0, trainable=False)
-			self._global_step.initializer.run(session=self._sess)
+			self._global_step = scae._global_step
 
 			loss_pri = tf.nn.l2_loss(self._res_stu.caps_presence_prob
 			                         - tf.stop_gradient(self._res_tch.caps_presence_prob))
 			loss_pos = tf.nn.l2_loss(self._res_stu.posterior_mixing_probs
 			                         - tf.stop_gradient(self._res_tch.posterior_mixing_probs))
-
 			self._loss = (1 - loss_lambda) * scae._loss + loss_lambda * (loss_pri + loss_pos)
-
-			eps = 1e-2 / float(scae._input_size[0]) ** 2
-			optimizer = tf.train.RMSPropOptimizer(self._learning_rate, momentum=.9, epsilon=eps)
-
-			self._train_step = optimizer.minimize(self._loss, global_step=self._global_step,
-			                                      var_list=tf.trainable_variables(scope=scae._scope))
-			self._sess.run(tf.initialize_variables(var_list=optimizer.variables()))
+			self._train_step = scae._optimizer.minimize(self._loss, global_step=self._global_step,
+			                                            var_list=tf.trainable_variables(scope=scae._scope))
 
 			saver = tf.train.Saver(var_list=tf.trainable_variables(scope=scope_teacher))
 			print('Restoring teacher from snapshot: {}'.format(snapshot_teacher))
@@ -139,7 +132,7 @@ if __name__ == '__main__':
 
 	config = Configs.config_mnist
 	batch_size = 100
-	max_train_steps = 100
+	max_train_steps = 50
 	learning_rate = 3e-5
 	snapshot_teacher = snapshot_teacher.format(config['name'])
 	snapshot_student = snapshot_student.format(config['name'])

@@ -243,7 +243,7 @@ def build_adv_train_from_config(
 if __name__ == '__main__':
 	block_warnings()
 
-	config = Configs.config_gtsrb
+	config = Configs.config_mnist
 	batch_size = 100
 	max_train_steps = 100
 	learning_rate = 3e-5

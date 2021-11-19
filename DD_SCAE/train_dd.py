@@ -77,18 +77,18 @@ class ScaeDefDist(_ModelCollector):
 					decay_rate=.96
 				)
 
-			# loss_pri = tf.nn.l2_loss(
-			# 	tf.nn.softmax(self._res_stu.caps_presence_prob / temperature)
-			# 	- tf.nn.softmax(self._res_tch.caps_presence_prob / temperature))
-			# loss_pos = tf.nn.l2_loss(
-			# 	tf.nn.softmax(self._res_stu.posterior_mixing_probs/ temperature)
-			# 	- tf.nn.softmax(self._res_tch.posterior_mixing_probs / temperature))
+			loss_pri = tf.nn.l2_loss(
+				tf.nn.softmax(self._res_stu.caps_presence_prob / temperature)
+				- tf.nn.softmax(self._res_tch.caps_presence_prob / temperature))
+			loss_pos = tf.nn.l2_loss(
+				tf.nn.softmax(self._res_stu.posterior_mixing_probs/ temperature)
+				- tf.nn.softmax(self._res_tch.posterior_mixing_probs / temperature))
 
-			loss_pri = tf.nn.l2_loss(self._res_stu.caps_presence_prob - self._res_tch.caps_presence_prob)
-			loss_pos = tf.nn.l2_loss(self._res_stu.posterior_mixing_probs - self._res_tch.posterior_mixing_probs)
+			# loss_pri = tf.nn.l2_loss(self._res_stu.caps_presence_prob - self._res_tch.caps_presence_prob)
+			# loss_pos = tf.nn.l2_loss(self._res_stu.posterior_mixing_probs - self._res_tch.posterior_mixing_probs)
 
-			# self._loss = (1 - loss_lambda) * scae._loss + loss_lambda * (temperature ** 2) * (loss_pri + loss_pos)
-			self._loss = (1 - loss_lambda) * scae._loss + loss_lambda * (loss_pri + loss_pos)
+			self._loss = (1 - loss_lambda) * scae._loss + loss_lambda * (temperature ** 2) * (loss_pri + loss_pos)
+			# self._loss = (1 - loss_lambda) * scae._loss + loss_lambda * (loss_pri + loss_pos)
 
 			eps = 1e-2 / float(scae._input_size[0]) ** 2
 			optimizer = tf.train.RMSPropOptimizer(learning_rate, momentum=.9, epsilon=eps)
@@ -153,7 +153,7 @@ if __name__ == '__main__':
 
 	# Distillation configuration
 	loss_lambda = 0.5
-	temperature = 1
+	temperature = 100
 
 	# We are not going to use the embedded noise
 	config['part_encoder_noise_scale'] = 0.
