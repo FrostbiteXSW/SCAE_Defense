@@ -1,13 +1,16 @@
 import tensorflow as tf
 from tqdm import tqdm
 
-from DD_SCAE.train_dd import snapshot_student, snapshot_teacher
 from SCAE.attack_cw import AttackerCW
 from SCAE.tools.model import ScaeBasement
 from SCAE.tools.model import _ModelCollector, _stacked_capsule_autoencoder as _scae
 from SCAE.tools.utilities import block_warnings
 from SCAE.train import build_from_config
 from utilities import *
+
+# File paths
+snapshot_student = './checkpoints/{}/model.ckpt'
+snapshot_teacher = '../SCAE/checkpoints/{}/model.ckpt'
 
 
 class ScaeAdvDist(_ModelCollector):
@@ -16,8 +19,7 @@ class ScaeAdvDist(_ModelCollector):
 			scae: ScaeBasement,
 			scope_teacher='SCAE',
 			snapshot_teacher=None,
-			loss_lambda=0.5,
-			n_steps_before_ll_to_zero=np.inf
+			loss_lambda=0.5
 	):
 		self._sess = scae._sess
 		self._valid_shape = scae._valid_shape
@@ -65,8 +67,7 @@ class ScaeAdvDist(_ModelCollector):
 
 			self._learning_rate = scae._learning_rate
 			self._global_step = scae._global_step
-			self._loss_lambda = tf.multiply(tf.to_float(loss_lambda),
-			                                tf.to_float(tf.to_float(self._global_step) < tf.to_float(n_steps_before_ll_to_zero)))
+			self._loss_lambda = loss_lambda
 
 			loss_pri = tf.nn.l2_loss(self._res_stu.caps_presence_prob
 			                         - tf.stop_gradient(self._res_tch.caps_presence_prob))
@@ -89,10 +90,6 @@ class ScaeAdvDist(_ModelCollector):
 		if isinstance(self._learning_rate, (int, float)):
 			return self._learning_rate
 		return self._sess.run(self._learning_rate)
-
-	@property
-	def loss_lambda(self) -> float:
-		return self._sess.run(self._loss_lambda)
 
 	def run(self, images, to_collect, labels=None, images_student=None):
 		try:
@@ -142,7 +139,6 @@ if __name__ == '__main__':
 
 	# Distillation configuration
 	loss_lambda = 0.5
-	n_steps_before_ll_to_zero = np.inf
 	num_batches_per_adv_train = 2
 
 	# Snapshot path configuration
@@ -171,8 +167,7 @@ if __name__ == '__main__':
 		scae=student,
 		scope_teacher='SCAE',
 		snapshot_teacher=snapshot_teacher,
-		loss_lambda=loss_lambda,
-		n_steps_before_ll_to_zero=n_steps_before_ll_to_zero
+		loss_lambda=loss_lambda
 	)
 
 	attacker = AttackerCW(
@@ -215,8 +210,7 @@ if __name__ == '__main__':
 			else:
 				n_batches = 0
 				teacher.train_step(images, attacker(images, labels, nan_if_fail=False), labels)
-			tqdm_trainset.set_postfix_str(f'GS={teacher.global_step}, LR={teacher.learning_rate:.1e}, '
-			                              f'LL={teacher.loss_lambda:.2f}')
+			tqdm_trainset.set_postfix_str(f'GS={teacher.global_step}, LR={teacher.learning_rate:.1e}')
 		tqdm_trainset.close()
 
 		test_loss = 0.
