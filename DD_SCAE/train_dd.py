@@ -98,7 +98,7 @@ class ScaeDefDist(_ModelCollector):
 			self._sess.run(tf.initialize_variables(var_list=optimizer.variables()))
 
 			saver = tf.train.Saver(var_list=tf.trainable_variables(scope=scope_teacher))
-			print('Restoring teacher from snapshot: {}'.format(snapshot_teacher))
+			print('Restoring teacher from snapshot: {}'.format(os.path.abspath(snapshot_teacher)))
 			saver.restore(self._sess, snapshot_teacher)
 
 	def run(self, images, to_collect, labels=None, images_student=None):

@@ -147,7 +147,7 @@ class ScaeAdvTrain(_ModelCollector):
 			self._saver = tf.train.Saver(var_list=tf.trainable_variables(scope=scope))
 
 			if snapshot:
-				print('Restoring from snapshot: {}'.format(snapshot))
+				print('Restoring from snapshot: {}'.format(os.path.abspath(snapshot)))
 				self._saver.restore(self._sess, snapshot)
 			else:
 				self._sess.run(tf.initialize_variables(var_list=tf.trainable_variables(scope=scope)))

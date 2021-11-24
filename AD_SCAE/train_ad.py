@@ -77,7 +77,7 @@ class ScaeAdvDist(_ModelCollector):
 			                                            var_list=tf.trainable_variables(scope=scae._scope))
 
 			saver = tf.train.Saver(var_list=tf.trainable_variables(scope=scope_teacher))
-			print('Restoring teacher from snapshot: {}'.format(snapshot_teacher))
+			print('Restoring teacher from snapshot: {}'.format(os.path.abspath(snapshot_teacher)))
 			saver.restore(self._sess, snapshot_teacher)
 
 	@property
@@ -142,7 +142,7 @@ if __name__ == '__main__':
 
 	# Distillation configuration
 	loss_lambda = 0.5
-	n_steps_before_ll_to_zero = 30000
+	n_steps_before_ll_to_zero = np.inf
 	num_batches_per_adv_train = 2
 
 	# Snapshot path configuration
