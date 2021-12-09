@@ -62,7 +62,7 @@ if __name__ == '__main__':
 	optimizer_config = AttackerCW.OptimizerConfigs.Adam_fast
 	num_samples = 1000
 	batch_size = 100
-	classifier = Attacker.Classifiers.PriK
+	classifier = Attacker.Classifiers.PosK
 	use_mask = True
 
 	# Create original model

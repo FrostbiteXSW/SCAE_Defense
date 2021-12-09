@@ -126,8 +126,11 @@ if __name__ == '__main__':
 
 	global_step = teacher.global_step
 
-	del student
+	# Release the session
+	student._sess.close()
+	del attacker
 	del teacher
+	del student
 
 	student = build_adv_train_from_config(
 		config=config,
@@ -139,8 +142,15 @@ if __name__ == '__main__':
 		snapshot=snapshot_student
 	)
 
+	attacker = AttackerCW(
+		scae=student,
+		optimizer_config=optimizer_config,
+		classifier=classifier
+	)
+
 	# Restore global step
 	student._sess.run(state_ops.assign(student._global_step, global_step))
+	del global_step
 
 	student.finalize()
 
