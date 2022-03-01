@@ -3,7 +3,7 @@ from tqdm import tqdm
 
 from AD_SCAE.train_ad import snapshot_student, snapshot_teacher, ScaeAdvDist
 from AT_SCAE.train_at import build_adv_train_from_config
-from SCAE.attack_cw import AttackerCW
+from SCAE.attack_opt import AttackerCW
 from SCAE.tools.utilities import block_warnings
 from SCAE.train import build_from_config
 from utilities import *

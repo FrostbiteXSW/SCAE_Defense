@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tqdm import tqdm
 
-from SCAE.attack_cw import AttackerCW
+from SCAE.attack_opt import AttackerCW
 from SCAE.tools.model import ScaeBasement
 from SCAE.tools.model import _ModelCollector, _stacked_capsule_autoencoder as _scae
 from SCAE.tools.utilities import block_warnings

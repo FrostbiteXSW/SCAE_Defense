@@ -1,5 +1,5 @@
-from ORI_SCAE.attack_cw_ori import build_all, result_path
-from SCAE.attack_cw import AttackerCW
+from ORI_SCAE.attack_opt_ori import build_all, result_path
+from SCAE.attack_opt import AttackerCW
 from SCAE.tools.utilities import block_warnings, load_npz
 from utilities import *
 

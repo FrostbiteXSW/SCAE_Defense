@@ -1,5 +1,5 @@
-from ORI_SCAE.attack_cw_ori import build_all, result_path
-from SCAE.attack_cw import AttackerCW
+from ORI_SCAE.attack_opt_ori import build_all, result_path
+from SCAE.attack_opt import AttackerCW
 from SCAE.tools.utilities import block_warnings, load_npz
 from utilities import *
 
@@ -8,9 +8,9 @@ if __name__ == '__main__':
 	block_warnings()
 
 	# Attack configuration
-	config = Configs.config_fashion_mnist
+	config = Configs.config_mnist
 	optimizer_config = AttackerCW.OptimizerConfigs.Adam_fast
-	num_samples = 5000
+	num_samples = 1000
 	batch_size = 100
 	classifier = Attacker.Classifiers.PosK
 	use_mask = True
@@ -21,7 +21,7 @@ if __name__ == '__main__':
 	                                                batch_size=batch_size,
 	                                                optimizer_config=optimizer_config,
 	                                                const_init=1e2,
-	                                                scope='SCAE',
+	                                                scope='STU',
 	                                                snapshot=snapshot_rob,
 	                                                snapshot_kmeans=snapshot_kmeans_rob)
 	# Load dataset
