@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tqdm import tqdm
 
-from SCAE.attack_opt import AttackerCW
+from SCAE.attack_opt import AttackerOPT
 from SCAE.tools.model import _ModelCollector, ScaeBasement, _stacked_capsule_autoencoder
 from SCAE.tools.utilities import block_warnings
 from utilities import *
@@ -261,8 +261,8 @@ if __name__ == '__main__':
 	num_batches_per_adv_train = 2
 
 	# Attack configuration
-	optimizer_config = AttackerCW.OptimizerConfigs.FGSM_normal
-	classifier = AttackerCW.Classifiers.PosL
+	optimizer_config = AttackerOPT.OptimizerConfigs.FGSM_normal
+	classifier = AttackerOPT.Classifiers.PosL
 
 	# We are not going to use the embedded noise
 	# Below is done in build_adv_train_from_config()
@@ -280,7 +280,7 @@ if __name__ == '__main__':
 		snapshot=snapshot_ori.format(config['dataset'])
 	)
 
-	attacker = AttackerCW(
+	attacker = AttackerOPT(
 		scae=model,
 		optimizer_config=optimizer_config,
 		classifier=classifier

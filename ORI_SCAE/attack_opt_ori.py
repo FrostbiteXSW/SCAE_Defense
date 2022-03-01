@@ -1,4 +1,4 @@
-from SCAE.attack_opt import AttackerCW
+from SCAE.attack_opt import AttackerOPT
 from SCAE.tools.model import KMeans
 from SCAE.tools.utilities import block_warnings
 from SCAE.train import build_from_config
@@ -6,7 +6,7 @@ from utilities import *
 
 
 # File paths
-result_path = './results/cw/'
+result_path = './results/opt/'
 
 
 def build_all(
@@ -41,7 +41,7 @@ def build_all(
 	else:
 		kmeans = None
 
-	attacker = AttackerCW(
+	attacker = AttackerOPT(
 		scae=model,
 		classifier=classifier,
 		kmeans_classifier=kmeans,
@@ -59,7 +59,7 @@ if __name__ == '__main__':
 
 	# Attack configuration
 	config = Configs.config_mnist
-	optimizer_config = AttackerCW.OptimizerConfigs.Adam_fast
+	optimizer_config = AttackerOPT.OptimizerConfigs.Adam_fast
 	num_samples = 1000
 	batch_size = 100
 	classifier = Attacker.Classifiers.PosK

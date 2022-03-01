@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tqdm import tqdm
 
-from SCAE.attack_opt import AttackerCW
+from SCAE.attack_opt import AttackerOPT
 from SCAE.tools.model import ScaeBasement
 from SCAE.tools.model import _ModelCollector, _stacked_capsule_autoencoder as _scae
 from SCAE.tools.utilities import block_warnings
@@ -146,8 +146,8 @@ if __name__ == '__main__':
 	snapshot_student = snapshot_student.format(config['name'])
 
 	# Attack configuration
-	optimizer_config = AttackerCW.OptimizerConfigs.FGSM_normal
-	classifier = AttackerCW.Classifiers.PosL
+	optimizer_config = AttackerOPT.OptimizerConfigs.FGSM_normal
+	classifier = AttackerOPT.Classifiers.PosL
 
 	# We are not going to use the embedded noise
 	config['part_encoder_noise_scale'] = 0.
@@ -170,7 +170,7 @@ if __name__ == '__main__':
 		loss_lambda=loss_lambda
 	)
 
-	attacker = AttackerCW(
+	attacker = AttackerOPT(
 		scae=student,
 		optimizer_config=optimizer_config,
 		classifier=classifier

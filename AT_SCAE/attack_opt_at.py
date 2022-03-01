@@ -1,5 +1,5 @@
 from ORI_SCAE.attack_opt_ori import build_all, result_path
-from SCAE.attack_opt import AttackerCW
+from SCAE.attack_opt import AttackerOPT
 from SCAE.tools.utilities import block_warnings, load_npz
 from utilities import *
 
@@ -9,7 +9,7 @@ if __name__ == '__main__':
 
 	# Attack configuration
 	config = Configs.config_mnist
-	optimizer_config = AttackerCW.OptimizerConfigs.Adam_fast
+	optimizer_config = AttackerOPT.OptimizerConfigs.Adam_fast
 	num_samples = 1000
 	batch_size = 100
 	classifier = Attacker.Classifiers.PosK
@@ -58,7 +58,7 @@ if __name__ == '__main__':
 	# Draw plot
 	labels = ['Robust Model']
 	data = [rob_pert_amount]
-	format_path = ori_pert_amount_file_path.format('cw', config['name'], classifier)
+	format_path = ori_pert_amount_file_path.format('opt', config['name'], classifier)
 	if os.path.exists(format_path):
 		ori_pert_amount = load_npz(format_path)['pert_amount']
 		labels.insert(0, 'Original Model')
